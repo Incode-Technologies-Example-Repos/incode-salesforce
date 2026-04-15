@@ -4,6 +4,8 @@ This guide walks you through everything you need to do after installing the **In
 
 You do not need to be a developer to complete this guide. Each step is numbered and takes about 30–45 minutes total.
 
+> **Screenshots:** Each step includes a callout showing exactly what you should see on screen. If your screen looks different, check the Troubleshooting section at the end of this guide.
+
 ---
 
 ## Before You Begin
@@ -42,7 +44,9 @@ Named Credentials store the Incode API base URL so Apex code can call the API se
    | `IncodeAPI` | `https://demo-api.incodesmile.com` |
    | `IncodeAPI_Production` | `https://saas-api.incodesmile.com` |
 
-   > **Screenshot callout:** You should see both rows listed under Named Credentials. If either is missing, contact Incode support — the package may not have installed cleanly.
+   ![Step 1 — Named Credentials list showing both IncodeAPI entries](screenshots/step1-named-credentials.png)
+
+   > If either row is missing, contact Incode support — the package may not have installed cleanly.
 
 4. You do not need to edit these. The package switches between them automatically based on the Custom Setting you configure in Step 2.
 
@@ -54,6 +58,9 @@ Custom Settings are where you enter your Incode API Key, Configuration ID, and c
 
 1. In Setup, type `Custom Settings` in Quick Find and click the result.
 2. Find **Incode Config** in the list and click **Manage** next to it.
+
+   ![Step 2a — Custom Settings list with Incode Config highlighted](screenshots/step2a-custom-settings-list.png)
+
 3. Click **New** (at the top of the page, above the Default Organisation Level Value section).
 4. Fill in the fields:
 
@@ -64,11 +71,13 @@ Custom Settings are where you enter your Incode API Key, Configuration ID, and c
    | **Webhook Secret** | Optional. If Incode provided a webhook signing secret, enter it here. You can leave it blank for now and add it later. |
    | **Use Production API** | Leave **unchecked** for Demo. Check this box **only** when you are ready to go live with the Production environment. |
 
+   ![Step 2b — Incode Config custom setting edit form with all fields filled in](screenshots/step2b-custom-settings-form.png)
+
    > **Tip:** Start with the Demo environment. Once you have tested end-to-end and confirmed verifications are working, come back here, tick the "Use Production API" checkbox, and save.
 
 5. Click **Save**.
 
-   > **Screenshot callout:** After saving you should see one row listed under "Default Organisation Level Value" showing your Configuration ID in the name column.
+   ![Step 2c — Custom Settings page after saving, showing one row under Default Organisation Level Value](screenshots/step2c-custom-settings-saved.png)
 
 ---
 
@@ -82,7 +91,7 @@ The Incode platform needs a public HTTPS URL to send verification results back t
    - If it says **Active** — you are good. Move on to the next step.
    - If it says **Inactive** — click **Activate** in the action column.
 
-   > **Screenshot callout:** The Status column should show a green dot and the word "Active" next to IncodeWebhook.
+   ![Step 3a — Sites list with IncodeWebhook showing Active status (green dot)](screenshots/step3a-sites-list-active.png)
 
 4. Once active, note the **Site URL** in the Domain column. It will look something like:
    ```
@@ -95,6 +104,8 @@ The Incode platform needs a public HTTPS URL to send verification results back t
    > https://yourcompany.my.salesforce-sites.com/IncodeWebhook/services/apexrest/incode/webhook
    > ```
 
+   ![Step 3b — Site detail page showing the full Site URL to copy](screenshots/step3b-site-url.png)
+
 ---
 
 ## Step 4 — Assign Permission Sets
@@ -106,6 +117,9 @@ Two permission sets are included with the package. You need to assign them to th
 1. In Setup, type `Permission Sets` in Quick Find and click the result.
 2. Click **Incode User** from the list.
 3. Click **Manage Assignments** → **Add Assignments**.
+
+   ![Step 4a — Permission Set Assignments page for Incode User](screenshots/step4a-permission-set-incode-user.png)
+
 4. Select all users who should be able to request identity verifications (e.g. your sales team, ops team).
 5. Click **Assign**.
 
@@ -121,29 +135,44 @@ This permission set must be assigned to the **Site Guest User** so Incode's webh
 4. Click that user's name to open their user record.
 5. Scroll down to **Permission Set Assignments** and click **Edit Assignments**.
 6. Move **Incode Webhook Guest** from the Available column to the Enabled column.
-7. Click **Save**.
 
-   > **Screenshot callout:** After saving, "Incode Webhook Guest" should appear in the Enabled Permission Sets list on the guest user's record.
+   ![Step 4b — Edit Permission Set Assignments showing Incode Webhook Guest in the Enabled column](screenshots/step4b-permission-set-webhook-guest.png)
+
+7. Click **Save**.
 
 ---
 
 ## Step 5 — Register the Webhook URL in the Incode Dashboard
 
-Now you will tell Incode where to send verification results.
+Now you will tell Incode where to send verification results when a session completes. You are registering a **Session Completion webhook** — this fires as soon as an end user finishes (or fails) their verification flow and is what triggers the status update back in Salesforce.
 
 1. Log in to the **Incode Dashboard** (your Incode account manager can provide the URL).
-2. Navigate to **Configurations** → click your active configuration.
-3. Find the **Webhooks** section.
-4. Paste the full webhook URL you assembled in Step 3:
-   ```
-   https://yourcompany.my.salesforce-sites.com/IncodeWebhook/services/apexrest/incode/webhook
-   ```
-5. Set the HTTP method to **POST** (this is usually the default).
-6. Save the configuration.
+2. Navigate to **Configurations** and click the configuration whose **Configuration ID** matches what you entered in Step 2.
 
-   > **Screenshot callout:** After saving, the Incode Dashboard should show your Salesforce URL listed as an active webhook endpoint.
+   ![Step 5a — Incode Dashboard Configurations list with the active configuration highlighted](screenshots/step5a-incode-configurations-list.png)
 
-   > **Tip:** If you chose to set a **Webhook Secret** in Step 2, make sure you also enter that same secret in the Incode Dashboard's webhook configuration. This allows the package to verify that incoming requests really are from Incode.
+3. Inside the configuration, scroll down to the **Webhooks** section and click **Add Webhook** (or **+ New**).
+
+   ![Step 5b — Incode Dashboard configuration detail page with Webhooks section visible](screenshots/step5b-incode-webhooks-section.png)
+
+4. Fill in the webhook form:
+
+   | Field | Value |
+   |---|---|
+   | **URL** | The full Salesforce webhook URL from Step 3 (e.g. `https://yourcompany.my.salesforce-sites.com/IncodeWebhook/services/apexrest/incode/webhook`) |
+   | **Method** | `POST` |
+   | **Event / Trigger** | Select **Onboarding Finished** (also labelled "Session Complete" or "ONBOARDING_FINISHED" depending on your dashboard version). This is the event that fires when a user completes or fails their verification. |
+   | **Secret** | If you entered a Webhook Secret in Step 2, enter that same value here. Otherwise leave blank. |
+
+   ![Step 5c — Incode Dashboard Add Webhook form filled in with the Salesforce URL and ONBOARDING_FINISHED event selected](screenshots/step5c-incode-add-webhook-form.png)
+
+5. Click **Save** (or **Create**).
+
+   ![Step 5d — Incode Dashboard showing the saved webhook endpoint listed as active](screenshots/step5d-incode-webhook-saved.png)
+
+   > **Why this specific event?** The package listens for `ONBOARDING_FINISHED` — the event Incode sends when a verification session ends (whether approved, declined, or errored). Without this event registered, Salesforce will never receive the result and the status will stay Pending indefinitely.
+
+   > **Tip:** If the Incode Dashboard shows other event types (e.g. document capture steps), you do not need to register those. Only the session completion event is required for the Salesforce integration.
 
 ---
 
@@ -156,6 +185,9 @@ When a Salesforce user clicks "Request Verification," an email is automatically 
 2. Navigate to the **Incode Templates** folder.
 3. Click **Incode Verification Request** to open the template.
 4. Click **Edit**.
+
+   ![Step 6a — Email Template editor showing the Incode Verification Request template](screenshots/step6a-email-template-editor.png)
+
 5. You can change:
    - The **Subject** line (e.g. "Please verify your identity with [Company Name]")
    - The **body text** — keep the `{!verificationUrl}` merge field in place, as this is what generates the verification button link
@@ -180,13 +212,23 @@ Repeat these steps for each record type you want to enable (Contact, Lead, Accou
 2. Click the **gear icon** in the top-right of the record page → **Edit Page**.
    - This opens the Lightning App Builder.
 3. In the left panel, scroll down to **Custom** components. You should see **Incode Verification**.
+
+   ![Step 7a — Lightning App Builder left panel with Incode Verification component visible under Custom](screenshots/step7a-lwc-in-builder-panel.png)
+
 4. Drag **Incode Verification** onto the right-hand sidebar of the page layout (the narrow column on the right).
+
+   ![Step 7b — Lightning App Builder canvas showing Incode Verification dropped into the right sidebar column](screenshots/step7b-lwc-dropped-on-canvas.png)
+
 5. Click **Save** → **Activate** (if prompted).
    - Choose **Activate for all users** unless you want to restrict it to specific profiles or apps.
 
-   > **Screenshot callout:** The sidebar card should appear on the right side of the record page. You will see an email input field and a "Request Verification" button. If the component shows an error message about missing configuration, go back and check Step 2.
+   ![Step 7c — Activation dialog with "Activate for all users" selected](screenshots/step7c-activation-dialog.png)
 
 6. Click **Back** to return to the record.
+
+   ![Step 7d — Contact record page with the Incode Identity Verification sidebar card visible on the right](screenshots/step7d-component-on-record-page.png)
+
+   > If the component shows an error message about missing configuration, go back and check Step 2.
 
 Repeat for Lead and Account pages as needed. Each object has its own default record page in the Lightning App Builder.
 
@@ -202,16 +244,23 @@ Before rolling out to your team, do a test run using a real (or test) email addr
 2. In the **Incode Identity Verification** sidebar card, you should see:
    - An email field pre-filled with the contact's email address
    - A **Request Verification** button
+
+   ![Step 8a — Incode Verification sidebar card showing email field and Request Verification button](screenshots/step8a-component-ready-state.png)
+
 3. Confirm the email address is correct (or type in a test address you have access to).
 4. Click **Request Verification**.
 5. Within a few seconds, the card should update to show a new row in the verification history table with status **Pending**.
-   - If you get an error message instead, jump to the Troubleshooting section below.
+
+   ![Step 8b — Verification history table showing one row with Pending status (orange badge)](screenshots/step8b-pending-status.png)
+
+   > If you get an error message instead, jump to the Troubleshooting section below.
+
 6. Check the inbox for the email address you used. You should receive an email with a verification link.
 7. Click the link in the email. You will be taken to the Incode-hosted verification flow.
 8. Complete the verification on your phone or browser (take a photo of an ID document and a selfie).
 9. Return to the Salesforce Contact record. Within about 10 seconds (the component polls automatically), the status should update to **Approved** (green) or **Declined** (red).
 
-   > **Screenshot callout:** A successful test will show a green "Approved" badge in the verification history table, with the Session ID, date, and a score value populated.
+   ![Step 8c — Verification history table showing Approved status (green badge) with score and session ID populated](screenshots/step8c-approved-status.png)
 
 ---
 
@@ -236,7 +285,7 @@ Before rolling out to your team, do a test run using a real (or test) email addr
 **Most likely cause:** The webhook is not configured correctly or the Site is not active.
 
 - Confirm the Site is Active (Step 3).
-- Confirm the full webhook URL is correctly registered in the Incode Dashboard (Step 5).
+- Confirm the full webhook URL is correctly registered in the Incode Dashboard, and that the **ONBOARDING_FINISHED** event is selected (Step 5).
 - Confirm the `Incode_Webhook_Guest` permission set is assigned to the Site Guest User (Step 4).
 - In Setup → Sites → click the IncodeWebhook site → **Site History** to see if any requests have come in and whether they produced errors.
 
@@ -257,6 +306,7 @@ This usually means Incode sent a webhook but Salesforce rejected it. The most co
 - The Site Guest User is missing the `Incode_Webhook_Guest` permission set (Step 4).
 - The webhook URL registered in the Incode Dashboard has a typo.
 - The Salesforce Site is inactive.
+- The wrong event type is registered in the Incode Dashboard — make sure **ONBOARDING_FINISHED** (session completion) is selected, not a mid-flow event.
 
 Check the **Site History** log (Setup → Sites → IncodeWebhook → Site History) for any 4xx or 5xx responses from recent webhook calls.
 
@@ -270,12 +320,16 @@ Use this checklist to confirm all steps are complete before going live:
 - [ ] Named Credentials `IncodeAPI` and `IncodeAPI_Production` are present in Setup
 - [ ] Custom Settings: API Key, Configuration ID, and Production toggle are configured
 - [ ] Salesforce Site `IncodeWebhook` is Active
-- [ ] Webhook URL registered in Incode Dashboard
+- [ ] Webhook URL registered in Incode Dashboard against the correct configuration, with **ONBOARDING_FINISHED** event selected
 - [ ] `Incode_User` permission set assigned to all relevant Salesforce users
 - [ ] `Incode_Webhook_Guest` permission set assigned to the IncodeWebhook Site Guest User
 - [ ] Verification email template reviewed and customised
 - [ ] `Incode Verification` component added to Contact, Lead, and/or Account record pages
 - [ ] End-to-end test completed successfully
+
+---
+
+> **Adding screenshots:** Each step above references an image file in the `docs/screenshots/` folder (e.g. `screenshots/step1-named-credentials.png`). To complete the guide, capture each screenshot from your Salesforce org and Incode Dashboard and save them into that folder using the filenames listed. Markdown will render them automatically when the guide is viewed on GitHub or in Notion.
 
 ---
 
