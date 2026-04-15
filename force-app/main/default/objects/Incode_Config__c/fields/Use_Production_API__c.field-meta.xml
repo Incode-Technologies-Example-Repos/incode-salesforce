@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Use_Production_API__c</fullName>
+    <description>Check this box to connect to the Incode Production API (saas-api.incodesmile.com). Leave unchecked to use the Demo API (demo-api.incodesmile.com).</description>
+    <label>Use Production API</label>
+    <defaultValue>false</defaultValue>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

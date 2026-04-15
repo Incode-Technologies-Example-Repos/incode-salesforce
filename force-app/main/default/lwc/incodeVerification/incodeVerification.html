@@ -1,0 +1,148 @@
+<template>
+    <lightning-card title="Incode Identity Verification" icon-name="standard:shield">
+
+        <!-- Loading spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-is-relative slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <div class="slds-p-around_medium">
+
+                <!-- Error banner -->
+                <template if:true={errorMessage}>
+                    <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+                        <span class="slds-assistive-text">Error</span>
+                        <lightning-icon icon-name="utility:error" alternative-text="Error"
+                            variant="inverse" size="x-small" class="slds-m-right_x-small">
+                        </lightning-icon>
+                        {errorMessage}
+                    </div>
+                </template>
+
+                <!-- Success confirmation -->
+                <template if:true={emailSent}>
+                    <div class="slds-notify slds-notify_alert slds-alert_success slds-m-bottom_small" role="alert">
+                        <lightning-icon icon-name="utility:check" alternative-text="Success"
+                            variant="inverse" size="x-small" class="slds-m-right_x-small">
+                        </lightning-icon>
+                        Verification email sent to {recipientEmail}. Status will update automatically.
+                    </div>
+                </template>
+
+                <!-- ── Send form ───────────────────────────────────────── -->
+                <lightning-input
+                    type="email"
+                    label="Send verification to"
+                    placeholder="email@example.com"
+                    value={recipientEmail}
+                    onchange={handleEmailChange}
+                    class="slds-m-bottom_small"
+                    required>
+                </lightning-input>
+
+                <lightning-button
+                    label="Request Verification"
+                    variant="brand"
+                    onclick={handleRequestVerification}
+                    disabled={isButtonDisabled}
+                    icon-name="utility:shield">
+                </lightning-button>
+
+                <!-- ── History log ────────────────────────────────────── -->
+                <template if:true={hasVerifications}>
+                    <div class="slds-m-top_medium">
+
+                        <!-- Header row -->
+                        <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
+                            <p class="slds-text-title_caps">Verification History</p>
+                            <template if:true={isPolling}>
+                                <p class="slds-text-color_weak slds-text-body_small polling-label">
+                                    <lightning-icon icon-name="utility:refresh" size="xx-small"
+                                        class="slds-m-right_xx-small"></lightning-icon>
+                                    Checking for updates…
+                                </p>
+                            </template>
+                        </div>
+
+                        <!-- One row per verification -->
+                        <template for:each={verificationRows} for:item="row">
+                            <div key={row.rowKey} class="history-row slds-m-bottom_x-small">
+
+                                <!-- Row 1: Status + dates -->
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small slds-m-bottom_xx-small">
+
+                                    <div class="slds-col slds-size_1-of-3">
+                                        <p class="slds-text-label slds-m-bottom_xx-small">Status</p>
+                                        <span style={row.badgeStyle}>{row.Status__c}</span>
+                                        <template if:true={row.isLatest}>
+                                            <span class="latest-tag slds-m-left_xx-small">latest</span>
+                                        </template>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-3">
+                                        <p class="slds-text-label slds-m-bottom_xx-small">Requested</p>
+                                        <p class="slds-text-body_small">
+                                            <lightning-formatted-date-time
+                                                value={row.Requested_Date__c}
+                                                year="numeric" month="short" day="2-digit"
+                                                hour="2-digit" minute="2-digit">
+                                            </lightning-formatted-date-time>
+                                        </p>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-3">
+                                        <template if:true={row.Completed_Date__c}>
+                                            <p class="slds-text-label slds-m-bottom_xx-small">Completed</p>
+                                            <p class="slds-text-body_small">
+                                                <lightning-formatted-date-time
+                                                    value={row.Completed_Date__c}
+                                                    year="numeric" month="short" day="2-digit"
+                                                    hour="2-digit" minute="2-digit">
+                                                </lightning-formatted-date-time>
+                                            </p>
+                                        </template>
+                                        <template if:true={row.Score__c}>
+                                            <p class="slds-text-label slds-m-bottom_xx-small slds-m-top_xx-small">Score</p>
+                                            <p class="slds-text-body_small">{row.Score__c}</p>
+                                        </template>
+                                    </div>
+
+                                </div>
+
+                                <!-- Row 2: Session ID + raw event -->
+                                <div class="slds-grid slds-wrap slds-gutters_xx-small session-meta">
+
+                                    <div class="slds-col slds-size_2-of-3">
+                                        <span class="meta-label">Session ID: </span>
+                                        <span class="meta-value">{row.Session_ID__c}</span>
+                                    </div>
+
+                                    <template if:true={row.Raw_Event_Type__c}>
+                                        <div class="slds-col slds-size_1-of-3">
+                                            <span class="meta-label">Event: </span>
+                                            <span class="meta-value">{row.Raw_Event_Type__c}</span>
+                                        </div>
+                                    </template>
+
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- No history yet -->
+                <template if:false={hasVerifications}>
+                    <p class="slds-text-color_weak slds-m-top_medium">
+                        No verification has been requested yet.
+                    </p>
+                </template>
+
+            </div>
+        </template>
+
+    </lightning-card>
+</template>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Configuration_ID__c</fullName>
+    <description>The Incode workflow/flow Configuration ID used when initiating a verification session via /omni/start. Found in your Incode dashboard under Workflows or Flows.</description>
+    <label>Configuration ID</label>
+    <length>255</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

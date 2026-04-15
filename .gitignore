@@ -1,0 +1,13 @@
+# Salesforce CLI
+.sf/
+.sfdx/
+
+# Destructive changes (temp deploy artifacts)
+destructive/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/

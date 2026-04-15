@@ -1,0 +1,66 @@
+/* Status pill — shared base */
+.badge-success,
+.badge-error,
+.badge-pending {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+
+.badge-success { background-color: #2e844a; } /* green  */
+.badge-error   { background-color: #ba0517; } /* red    */
+.badge-pending { background-color: #dd7a01; } /* orange */
+
+/* History rows */
+.history-row {
+    background: #f3f2f2;
+    border-radius: 4px;
+    padding: 10px 12px;
+    border-left: 4px solid #dddbda;
+}
+
+/* "latest" pill next to the badge */
+.latest-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #0070d2;
+    color: #fff;
+    border-radius: 10px;
+    padding: 1px 6px;
+    vertical-align: middle;
+}
+
+/* Polling indicator */
+.polling-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #706e6b;
+    font-size: 12px;
+}
+
+/* Session ID / event type meta row */
+.session-meta {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e0e0e0;
+}
+.meta-label {
+    font-size: 11px;
+    color: #706e6b;
+    font-weight: 600;
+}
+.meta-value {
+    font-size: 11px;
+    color: #3e3e3c;
+    font-family: monospace;
+    word-break: break-all;
+}

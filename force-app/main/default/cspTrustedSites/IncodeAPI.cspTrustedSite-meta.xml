@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Allows outbound callouts to the Incode API. Update endpointUrl if your Incode environment uses a different base domain.</description>
+    <endpointUrl>https://demo-api.incodesmile.com</endpointUrl>
+    <isActive>true</isActive>
+</CspTrustedSite>

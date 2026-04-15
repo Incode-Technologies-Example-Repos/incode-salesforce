@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <description>Sent to a Contact or Lead when an identity verification is requested. Includes the verification link and plain-text fallback URL.</description>
+    <encodingKey>UTF-8</encodingKey>
+    <name>Incode Verification Request</name>
+    <style>none</style>
+    <subject>Action required: Please complete your identity verification</subject>
+    <textOnly>Hi {!Contact.FirstName},
+
+We need to verify your identity as part of our onboarding process.
+
+Please visit the following link to complete your verification:
+{!Incode_Verification__c.Verification_URL__c}
+
+This link is unique to you — please do not share it with others.</textOnly>
+    <type>custom</type>
+    <uiType>SFX</uiType>
+</EmailTemplate>
