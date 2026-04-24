@@ -1,5 +1,5 @@
 <template>
-    <lightning-card title="Incode Identity Verification" icon-name="standard:shield">
+    <lightning-card title="Incode Business Verification" icon-name="standard:shield">
 
         <!-- Loading spinner -->
         <template if:true={isLoading}>
@@ -28,14 +28,14 @@
                         <lightning-icon icon-name="utility:check" alternative-text="Success"
                             variant="inverse" size="x-small" class="slds-m-right_x-small">
                         </lightning-icon>
-                        Verification email sent to {recipientEmail}. Status will update automatically.
+                        Business verification email sent to {recipientEmail}. Status will update automatically.
                     </div>
                 </template>
 
                 <!-- ── Send form ───────────────────────────────────────── -->
                 <lightning-input
                     type="email"
-                    label="Send verification to"
+                    label="Send business verification to"
                     placeholder="email@example.com"
                     value={recipientEmail}
                     onchange={handleEmailChange}
@@ -55,9 +55,8 @@
                 <template if:true={hasVerifications}>
                     <div class="slds-m-top_medium">
 
-                        <!-- Header row -->
                         <div class="slds-grid slds-grid_align-spread slds-m-bottom_x-small">
-                            <p class="slds-text-title_caps">Verification History</p>
+                            <p class="slds-text-title_caps">Business Verification History</p>
                             <template if:true={isPolling}>
                                 <p class="slds-text-color_weak slds-text-body_small polling-label">
                                     <lightning-icon icon-name="utility:refresh" size="xx-small"
@@ -67,11 +66,12 @@
                             </template>
                         </div>
 
-                        <!-- One row per verification -->
                         <template for:each={verificationRows} for:item="row">
-                            <div key={row.rowKey} class="history-row slds-m-bottom_x-small">
+                            <div key={row.rowKey}
+                                class="history-row slds-m-bottom_x-small"
+                                data-id={row.rowKey}
+                                onclick={handleRowClick}>
 
-                                <!-- Row 1: Status + dates -->
                                 <div class="slds-grid slds-wrap slds-gutters_xx-small slds-m-bottom_xx-small">
 
                                     <div class="slds-col slds-size_1-of-3">
@@ -79,6 +79,9 @@
                                         <span style={row.badgeStyle}>{row.Status__c}</span>
                                         <template if:true={row.isLatest}>
                                             <span class="latest-tag slds-m-left_xx-small">latest</span>
+                                        </template>
+                                        <template if:true={row.isClickable}>
+                                            <span class="view-details-btn slds-m-top_xx-small">View Details</span>
                                         </template>
                                     </div>
 
@@ -112,21 +115,17 @@
 
                                 </div>
 
-                                <!-- Row 2: Session ID + raw event -->
                                 <div class="slds-grid slds-wrap slds-gutters_xx-small session-meta">
-
                                     <div class="slds-col slds-size_2-of-3">
                                         <span class="meta-label">Session ID: </span>
                                         <span class="meta-value">{row.Session_ID__c}</span>
                                     </div>
-
                                     <template if:true={row.Raw_Event_Type__c}>
                                         <div class="slds-col slds-size_1-of-3">
                                             <span class="meta-label">Event: </span>
                                             <span class="meta-value">{row.Raw_Event_Type__c}</span>
                                         </div>
                                     </template>
-
                                 </div>
 
                             </div>
@@ -134,10 +133,9 @@
                     </div>
                 </template>
 
-                <!-- No history yet -->
                 <template if:false={hasVerifications}>
                     <p class="slds-text-color_weak slds-m-top_medium">
-                        No verification has been requested yet.
+                        No business verification has been requested yet.
                     </p>
                 </template>
 
@@ -145,4 +143,211 @@
         </template>
 
     </lightning-card>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Session Details Modal
+    ═══════════════════════════════════════════════════════════════════ -->
+    <template if:true={showModal}>
+        <div class="modal-backdrop" onclick={handleModalClose}></div>
+
+        <div class="modal-container" role="dialog" aria-modal="true">
+
+            <!-- Modal header -->
+            <div class="modal-header">
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                    <div>
+                        <h2 class="modal-title">{modalTitle}</h2>
+                        <div class="slds-m-top_xx-small">
+                            <span style={modalStatusStyle}>{modalStatusLabel}</span>
+                            <template if:true={modalRawEvent}>
+                                <span class="modal-event-tag slds-m-left_x-small">{modalRawEvent}</span>
+                            </template>
+                        </div>
+                    </div>
+                    <button class="modal-close-btn" onclick={handleModalClose} title="Close">✕</button>
+                </div>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+
+                <template if:true={modalLoading}>
+                    <div class="slds-is-relative" style="height:120px">
+                        <lightning-spinner alternative-text="Loading details" size="medium"></lightning-spinner>
+                    </div>
+                </template>
+
+                <template if:true={modalError}>
+                    <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                        <lightning-icon icon-name="utility:error" alternative-text="Error"
+                            variant="inverse" size="x-small" class="slds-m-right_x-small">
+                        </lightning-icon>
+                        {modalError}
+                    </div>
+                </template>
+
+                <template if:false={modalLoading}>
+                    <template if:true={_modalDetails}>
+
+                        <!-- ── Customer Input ────────────────────────────── -->
+                        <div class="modal-section">
+                            <h3 class="modal-section-title">Customer Input</h3>
+                            <div class="slds-grid slds-wrap slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-2 modal-field">
+                                    <p class="modal-field-label">Business Name</p>
+                                    <p class="modal-field-value">{bvrBusinessName}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 modal-field">
+                                    <p class="modal-field-label">Tax ID / EIN</p>
+                                    <p class="modal-field-value">{bvrTaxId}</p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-1 modal-field">
+                                    <p class="modal-field-label">Address</p>
+                                    <p class="modal-field-value">{bvrAddress}</p>
+                                </div>
+                                <template if:true={bvrUboNames}>
+                                    <div class="slds-col slds-size_1-of-1 modal-field">
+                                        <p class="modal-field-label">UBO Names</p>
+                                        <p class="modal-field-value">{bvrUboNames}</p>
+                                    </div>
+                                </template>
+                                <template if:true={bvrDirectors}>
+                                    <div class="slds-col slds-size_1-of-1 modal-field">
+                                        <p class="modal-field-label">Directors</p>
+                                        <p class="modal-field-value">{bvrDirectors}</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- ── eKYB Output ───────────────────────────────── -->
+                        <div class="modal-section">
+
+                            <!-- Section header with overall status -->
+                            <div class="ekyb-header">
+                                <div>
+                                    <h3 class="modal-section-title" style="margin-bottom:0">eKYB Output</h3>
+                                    <p class="ekyb-entity-type">Entity Type: {bvEntityType}</p>
+                                </div>
+                                <template if:true={bvOverallStatus}>
+                                    <div class="ekyb-overall">
+                                        <p class="ekyb-overall-label">Overall Result</p>
+                                        <span style={bvOverallStatusStyle}>{bvOverallStatus}</span>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Verification results table -->
+                            <template if:true={verificationBadges.length}>
+                                <p class="ver-table-heading">Verification Results</p>
+                                <table class="ver-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="ver-table-th">Check</th>
+                                            <th class="ver-table-th ver-table-th_result">Result</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={verificationBadges} for:item="badge">
+                                            <tr key={badge.key} class="ver-table-row">
+                                                <td class="ver-table-label">{badge.label}</td>
+                                                <td class="ver-table-result">
+                                                    <span class={badge.badgeClass}>{badge.value}</span>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </template>
+
+                            <!-- Verification messages -->
+                            <template if:true={hasVerificationMessages}>
+                                <div class="ver-messages-box">
+                                    <p class="ver-messages-title">
+                                        <lightning-icon icon-name="utility:info" size="xx-small"
+                                            class="slds-m-right_xx-small" variant="warning">
+                                        </lightning-icon>
+                                        Notes
+                                    </p>
+                                    <ul class="ver-messages">
+                                        <template for:each={verificationMessages} for:item="msg">
+                                            <li key={msg.key} class="ver-message-item">{msg.message}</li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+
+                            <!-- Applied rule -->
+                            <template if:true={appliedRule}>
+                                <div class="applied-rule-box">
+                                    <div class="applied-rule-header">
+                                        <div>
+                                            <p class="applied-rule-caption">Applied Business Rule</p>
+                                            <p class="applied-rule-name">{appliedRule.name}</p>
+                                        </div>
+                                        <span style={appliedRuleStyle}>{appliedRule.status}</span>
+                                    </div>
+                                    <p class="applied-rule-expr">{appliedRule.expression}</p>
+                                </div>
+                            </template>
+
+                            <!-- Collapsible people / UBOs -->
+                            <template if:true={hasBeneficialOwners}>
+                                <details class="ubo-section">
+                                    <summary class="ubo-summary">
+                                        <div class="ubo-summary-left">
+                                            <span class="ubo-chevron-icon"></span>
+                                            <span>Key People &amp; UBOs</span>
+                                        </div>
+                                        <span class="ubo-count">{beneficialOwnersCount}</span>
+                                    </summary>
+                                    <div class="ubo-body">
+                                        <template for:each={beneficialOwners} for:item="person">
+                                            <details key={person.key} class="ubo-person-card">
+                                                <summary class="ubo-person-summary">
+                                                    <span class="ubo-chevron-icon ubo-person-chevron"></span>
+                                                    <div class="ubo-person-info">
+                                                        <p class="ubo-person-name">
+                                                            {person.name}
+                                                            <template if:true={person.hasStatusDot}>
+                                                                <span class="ubo-tooltip-wrap">
+                                                                    <span class={person.statusDotClass}>{person.statusDotChar}</span>
+                                                                    <span class="ubo-tooltip-text">{person.statusDotLabel}</span>
+                                                                </span>
+                                                            </template>
+                                                        </p>
+                                                        <template if:true={person.hasTitles}>
+                                                            <p class="ubo-person-preview">{person.titlePreview}</p>
+                                                        </template>
+                                                    </div>
+                                                    <span class="ubo-title-badge">{person.titleCount}</span>
+                                                </summary>
+                                                <div class="ubo-person-body">
+                                                    <template if:true={person.hasTitles}>
+                                                        <div class="ubo-title-chips">
+                                                            <template for:each={person.titleList} for:item="t">
+                                                                <span key={t.key} class="ubo-title-chip">{t.label}</span>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                    <template if:false={person.hasTitles}>
+                                                        <span class="ubo-no-titles">No titles on record</span>
+                                                    </template>
+                                                </div>
+                                            </details>
+                                        </template>
+                                    </div>
+                                </details>
+                            </template>
+
+                        </div>
+
+                    </template>
+                </template>
+
+            </div><!-- /modal-body -->
+
+        </div><!-- /modal-container -->
+    </template>
+
 </template>

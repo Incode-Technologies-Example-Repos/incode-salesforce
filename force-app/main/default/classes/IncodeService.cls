@@ -31,6 +31,12 @@ public with sharing class IncodeService {
         @AuraEnabled public String verificationRecordId;
     }
 
+    private class KybScoreResult {
+        public Decimal overallValue;
+        public String  overallStatus; // OK | FAIL | UNKNOWN
+        public String  reasonMsg;
+    }
+
     /**
      * Initiates a new verification session for the given Salesforce record.
      *
@@ -109,11 +115,12 @@ public with sharing class IncodeService {
 
         // Persist a verification record
         Incode_Verification__c verif = new Incode_Verification__c(
-            Session_ID__c        = interviewId,
-            Status__c            = 'Pending',
-            Requested_Date__c    = System.now(),
+            Session_ID__c         = interviewId,
+            Session_Token__c      = sessionToken,
+            Status__c             = 'Pending',
+            Requested_Date__c     = System.now(),
             External_Reference__c = recordId,
-            Verification_URL__c  = startUrl
+            Verification_URL__c   = startUrl
         );
 
         if (objectType == 'Contact') {
@@ -236,6 +243,190 @@ public with sharing class IncodeService {
             ORDER BY Requested_Date__c DESC
             LIMIT 50
         ];
+    }
+
+    /**
+     * Polls /omni/get/score for every Pending verification on the given record,
+     * maps overall.status (OK → Approved, FAIL → Declined, UNKNOWN → stay Pending),
+     * persists the result, and returns the refreshed list.
+     *
+     * Called by the LWC every 10s instead of a passive getVerifications poll.
+     * Callout happens before DML so no @future is needed.
+     */
+    @AuraEnabled
+    public static List<Incode_Verification__c> pollAndUpdateStatus(String recordId) {
+        Incode_Config__c config = Incode_Config__c.getInstance();
+        if (config == null || String.isBlank(config.API_Key__c)) {
+            return getVerifications(recordId);
+        }
+
+        List<Incode_Verification__c> pending = [
+            SELECT Id, Session_ID__c, Session_Token__c, Status__c
+            FROM Incode_Verification__c
+            WHERE External_Reference__c = :recordId
+            AND Status__c = 'Pending'
+            LIMIT 10
+        ];
+
+        if (pending.isEmpty()) {
+            return getVerifications(recordId);
+        }
+
+        List<Incode_Verification__c> toUpdate = new List<Incode_Verification__c>();
+
+        for (Incode_Verification__c v : pending) {
+            KybScoreResult score = fetchKybScore(v.Session_ID__c, v.Session_Token__c, config.API_Key__c);
+            if (score == null || score.overallStatus == 'UNKNOWN' || String.isBlank(score.overallStatus)) {
+                continue; // scores not ready yet, stay Pending
+            }
+
+            v.Status__c        = score.overallStatus == 'OK' ? 'Approved' : 'Declined';
+            v.Completed_Date__c = System.now();
+            if (score.overallValue != null) {
+                v.Score__c = score.overallValue;
+            }
+            if (String.isNotBlank(score.reasonMsg)) {
+                v.Raw_Event_Type__c = score.reasonMsg.length() > 255
+                    ? score.reasonMsg.substring(0, 255)
+                    : score.reasonMsg;
+            }
+            toUpdate.add(v);
+        }
+
+        if (!toUpdate.isEmpty()) {
+            update toUpdate;
+        }
+
+        return getVerifications(recordId);
+    }
+
+    private static KybScoreResult fetchKybScore(String interviewId, String sessionToken, String apiKey) {
+        Incode_Config__c cfg = Incode_Config__c.getInstance();
+        String nc = namedCredential(cfg);
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(nc + '/omni/get/score?id=' + EncodingUtil.urlEncode(interviewId, 'UTF-8'));
+        req.setMethod('GET');
+        req.setHeader('x-api-key', apiKey);
+        req.setHeader('api-version', '1.0');
+        if (String.isNotBlank(sessionToken)) {
+            req.setHeader('X-Incode-Hardware-Id', sessionToken);
+        }
+        req.setTimeout(30000);
+
+        HttpResponse res = new Http().send(req);
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            return null;
+        }
+
+        Map<String, Object> parsed = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+        KybScoreResult result = new KybScoreResult();
+
+        Map<String, Object> overall = (Map<String, Object>) parsed.get('overall');
+        if (overall != null) {
+            result.overallStatus = (String) overall.get('status');
+            Object val = overall.get('value');
+            if (val != null) {
+                try { result.overallValue = Decimal.valueOf(String.valueOf(val)); } catch (Exception e) {}
+            }
+        }
+
+        result.reasonMsg = (String) parsed.get('reasonMsg');
+        return result;
+    }
+
+    /**
+     * Authenticates with the Incode executive API using the Admin Email/Password
+     * stored in Incode_Config__c and returns the bearer token.
+     */
+    private static String getAdminToken(String nc, String apiKey, String adminEmail, String adminPassword) {
+        Map<String, Object> body = new Map<String, Object>{
+            'email'    => adminEmail,
+            'password' => adminPassword
+        };
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(nc + '/executive/log-in');
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('x-api-key', apiKey);
+        req.setHeader('api-version', '1.0');
+        req.setBody(JSON.serialize(body));
+        req.setTimeout(30000);
+
+        HttpResponse res = new Http().send(req);
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            return null;
+        }
+
+        Map<String, Object> parsed = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+        return (String) parsed.get('token');
+    }
+
+    /**
+     * Returns the full /omni/single-session JSON for a given verification record.
+     * Caches the result in Session_Details__c so the callout only happens once.
+     *
+     * @param verificationId  The Salesforce Incode_Verification__c record Id.
+     * @return                The raw JSON string from /omni/single-session, or null on error.
+     */
+    @AuraEnabled
+    public static String fetchSessionDetails(String verificationId) {
+        List<Incode_Verification__c> records = [
+            SELECT Id, Session_ID__c, Session_Details__c
+            FROM Incode_Verification__c
+            WHERE Id = :verificationId
+            LIMIT 1
+        ];
+
+        if (records.isEmpty()) {
+            throw new IncodeException('Verification record not found: ' + verificationId);
+        }
+
+        Incode_Verification__c verif = records[0];
+
+        if (String.isNotBlank(verif.Session_Details__c)) {
+            return verif.Session_Details__c;
+        }
+
+        Incode_Config__c config = Incode_Config__c.getInstance();
+        if (config == null || String.isBlank(config.API_Key__c)) {
+            throw new IncodeException('Incode API Key is not configured.');
+        }
+        if (String.isBlank(config.Admin_Email__c) || String.isBlank(config.Admin_Password__c)) {
+            throw new IncodeException('Admin Email and Admin Password must be set in Incode Config custom settings.');
+        }
+
+        String nc      = namedCredential(config);
+        String apiKey  = config.API_Key__c;
+        String token   = getAdminToken(nc, apiKey, config.Admin_Email__c, config.Admin_Password__c);
+
+        if (String.isBlank(token)) {
+            throw new IncodeException('Could not obtain admin token from Incode. Check Admin Email/Password in Incode Config.');
+        }
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(nc + '/omni/single-session?id=' + EncodingUtil.urlEncode(verif.Session_ID__c, 'UTF-8'));
+        req.setMethod('GET');
+        req.setHeader('x-api-key', apiKey);
+        req.setHeader('api-version', '1.0');
+        req.setHeader('X-Incode-Hardware-Id', token);
+        req.setTimeout(30000);
+
+        HttpResponse res = new Http().send(req);
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            throw new IncodeException('Incode /omni/single-session returned HTTP ' + res.getStatusCode() + ': ' + res.getBody());
+        }
+
+        String detailsJson = res.getBody();
+
+        // Cache result so subsequent opens are instant
+        verif.Session_Details__c = detailsJson.length() > 131072
+            ? detailsJson.substring(0, 131072)
+            : detailsJson;
+        update verif;
+
+        return detailsJson;
     }
 
     public class IncodeException extends Exception {}
