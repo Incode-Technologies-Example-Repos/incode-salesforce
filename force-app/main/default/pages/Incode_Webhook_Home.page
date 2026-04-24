@@ -1,0 +1,4 @@
+<apex:page >
+    <h1>Incode Webhook Endpoint</h1>
+    <p>This site is used to receive webhook events from the Incode identity verification platform.</p>
+</apex:page>

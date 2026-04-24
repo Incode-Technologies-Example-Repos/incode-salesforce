@@ -97,6 +97,7 @@ global without sharing class IncodeWebhookHandler {
             SELECT Id, Status__c
             FROM Incode_Verification__c
             WHERE Session_ID__c = :interviewId
+            WITH SYSTEM_MODE
             LIMIT 1
         ];
 
@@ -122,7 +123,7 @@ global without sharing class IncodeWebhookHandler {
         verif.Status__c          = mappedStatus;
         verif.Completed_Date__c  = System.now();
         verif.Raw_Event_Type__c  = debugValue;
-        update verif;
+        Database.update(verif, AccessLevel.SYSTEM_MODE);
 
         // --- 5. Fetch score asynchronously for completed sessions ---
         if ((mappedStatus == 'Approved' || mappedStatus == 'Declined')
@@ -190,6 +191,7 @@ global without sharing class IncodeWebhookHandler {
             SELECT Id, Score__c
             FROM Incode_Verification__c
             WHERE Id = :verifId
+            WITH SYSTEM_MODE
             LIMIT 1
         ];
         if (records.isEmpty()) {
@@ -200,6 +202,6 @@ global without sharing class IncodeWebhookHandler {
         if (score != null) {
             record.Score__c = score;
         }
-        update record;
+        Database.update(record, AccessLevel.SYSTEM_MODE);
     }
 }

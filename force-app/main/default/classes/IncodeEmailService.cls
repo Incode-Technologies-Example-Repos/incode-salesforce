@@ -98,7 +98,7 @@ public with sharing class IncodeEmailService {
     private static void sendFallbackEmail(String toAddress, String firstName, String verificationUrl) {
         Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
         mail.setToAddresses(new List<String>{ toAddress });
-        mail.setSubject('Action required: Please complete your identity verification');
+        mail.setSubject('Action required: Please complete your business verification');
         mail.setHtmlBody(buildHtmlBody(firstName, verificationUrl));
         mail.setPlainTextBody(buildPlainTextFallback(firstName, verificationUrl));
         mail.setSaveAsActivity(false);
@@ -119,12 +119,12 @@ public with sharing class IncodeEmailService {
         String greeting = String.isNotBlank(firstName) ? 'Hi ' + firstName + ',' : 'Hi,';
         return '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">'
             + '<p>' + greeting + '</p>'
-            + '<p>We need to verify your identity as part of our onboarding process. '
-            + 'Please click the button below to complete your verification — it only takes a few minutes.</p>'
+            + '<p>We need to verify your business as part of our onboarding process. '
+            + 'Please click the button below to complete your business verification — it only takes a few minutes.</p>'
             + '<p style="text-align:center;margin:32px 0">'
             + '<a href="' + verificationUrl + '" '
             + 'style="background-color:#0070d2;color:#fff;padding:14px 28px;text-decoration:none;'
-            + 'border-radius:4px;font-size:16px;font-weight:bold">Verify My Identity</a>'
+            + 'border-radius:4px;font-size:16px;font-weight:bold">Verify My Business</a>'
             + '</p>'
             + '<p style="font-size:13px;color:#666">If the button above does not work, copy and paste this link into your browser:</p>'
             + '<p style="font-size:13px;word-break:break-all;color:#0070d2">' + verificationUrl + '</p>'
@@ -136,8 +136,8 @@ public with sharing class IncodeEmailService {
     private static String buildPlainTextFallback(String firstName, String verificationUrl) {
         String greeting = String.isNotBlank(firstName) ? 'Hi ' + firstName + ',' : 'Hi,';
         return greeting + '\n\n'
-            + 'We need to verify your identity as part of our onboarding process.\n\n'
-            + 'Please visit the following link to complete your verification:\n'
+            + 'We need to verify your business as part of our onboarding process.\n\n'
+            + 'Please visit the following link to complete your business verification:\n'
             + verificationUrl + '\n\n'
             + 'This link is unique to you. Please do not share it with others.';
     }

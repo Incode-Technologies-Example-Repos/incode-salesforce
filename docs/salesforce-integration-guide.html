@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salesforce Integration Guide — Incode Developer Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Rethink Sans', sans-serif;
+      background: #f8f9fc;
+      color: #0f1117;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ─── Design tokens ────────────────────────────────────────── */
+    :root {
+      --blue:          #006aff;
+      --blue-dark:     #004099;
+      --blue-hover:    #0055cc;
+      --blue-faint:    rgba(0,106,255,0.08);
+      --blue-faint2:   rgba(0,106,255,0.15);
+      --sidebar-bg:    #1e2130;
+      --sidebar-hover: #272d42;
+      --sidebar-active:#2c3350;
+      --sidebar-border:rgba(255,255,255,0.07);
+      --sidebar-text:  rgba(255,255,255,0.75);
+      --sidebar-muted: rgba(255,255,255,0.38);
+      --text:          #0f1117;
+      --text-secondary:#384248;
+      --text-muted:    #60667C;
+      --surface:       #ffffff;
+      --surface-alt:   #f4f6fb;
+      --border:        #e4e7ef;
+      --code-bg:       #1a1f2e;
+      --green:         #17a34a;
+      --amber:         #d97706;
+      --red:           #dc2626;
+      --sidebar-w:     268px;
+      --content-max:   780px;
+    }
+
+    /* ─── Sidebar ───────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--sidebar-border);
+      flex-shrink: 0;
+    }
+    .sidebar-brand img {
+      height: 24px;
+      width: auto;
+    }
+    .sidebar-brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-brand-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .sidebar-brand-sub {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--sidebar-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0 24px;
+    }
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+    .nav-group {
+      margin-bottom: 4px;
+    }
+    .nav-group-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--sidebar-muted);
+      padding: 14px 20px 6px;
+    }
+    .nav-item {
+      display: block;
+      padding: 7px 20px;
+      font-size: 13.5px;
+      font-weight: 450;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      border-radius: 0;
+      transition: background 0.12s, color 0.12s;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+    .nav-item:hover {
+      background: var(--sidebar-hover);
+      color: #fff;
+    }
+    .nav-item.active {
+      background: var(--blue-faint2);
+      color: #fff;
+      font-weight: 600;
+      border-left: 2px solid var(--blue);
+      padding-left: 18px;
+    }
+    .nav-item.sub {
+      padding-left: 34px;
+      font-size: 13px;
+      color: var(--sidebar-muted);
+    }
+    .nav-item.sub:hover { color: var(--sidebar-text); }
+    .nav-item.sub.active { padding-left: 32px; }
+
+    .sidebar-version {
+      padding: 12px 20px;
+      font-size: 11px;
+      color: var(--sidebar-muted);
+      border-top: 1px solid var(--sidebar-border);
+      flex-shrink: 0;
+    }
+    .sidebar-version span {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    /* ─── Main content ─────────────────────────────────────────── */
+    .content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .topbar-breadcrumb .sep { opacity: 0.4; }
+    .topbar-breadcrumb .current { color: var(--text-secondary); font-weight: 500; }
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--blue-faint);
+      color: var(--blue);
+      border: 1px solid rgba(0,106,255,0.2);
+    }
+    .topbar-updated {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Page body */
+    .page-body {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 48px 48px 96px;
+      width: 100%;
+    }
+
+    /* ─── Typography ───────────────────────────────────────────── */
+    .page-hero {
+      margin-bottom: 48px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+    .page-hero h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .page-hero p {
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      max-width: 640px;
+    }
+    .hero-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .hero-tag {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    section.doc-section {
+      margin-bottom: 56px;
+      scroll-margin-top: 72px;
+    }
+    section.doc-section h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    section.doc-section h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 28px 0 12px;
+      letter-spacing: -0.01em;
+    }
+    section.doc-section h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 22px 0 10px;
+    }
+    p { line-height: 1.7; color: var(--text-secondary); margin-bottom: 14px; }
+    p:last-child { margin-bottom: 0; }
+    strong { color: var(--text); font-weight: 600; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ─── Tables ───────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead tr {
+      background: var(--surface-alt);
+    }
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-alt); }
+    td code, th code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: rgba(0,106,255,0.07);
+      color: var(--blue-dark);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* ─── Code blocks ──────────────────────────────────────────── */
+    pre {
+      background: var(--code-bg);
+      border-radius: 10px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 16px 0 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+    }
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.75;
+      color: #c9d1e0;
+      background: none;
+      padding: 0;
+      border-radius: 0;
+    }
+    .code-label {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sidebar-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: rgba(0,106,255,0.07);
+      color: #0044bb;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    /* Syntax colours inside pre */
+    .kw  { color: #79c0ff; }
+    .str { color: #a5d6ff; }
+    .cm  { color: #6e7f99; font-style: italic; }
+    .key { color: #ff7b72; }
+    .val { color: #79c0ff; }
+    .num { color: #f2cc60; }
+    .url { color: #56d364; }
+
+    /* Copy button */
+    .copy-btn {
+      position: absolute;
+      top: 12px; right: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--sidebar-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Rethink Sans', sans-serif;
+      transition: background 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+    .copy-btn.copied { color: #56d364; border-color: rgba(86,211,100,0.3); }
+
+    /* ─── Callouts ─────────────────────────────────────────────── */
+    .callout {
+      display: flex;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 16px 0 22px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .callout-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+      line-height: 1.6;
+    }
+    .callout-body { flex: 1; }
+    .callout-body strong { display: block; margin-bottom: 3px; font-size: 13px; }
+    .callout-body p { margin: 0; font-size: 13.5px; }
+    .callout.info    { background: var(--blue-faint); border-left: 3px solid var(--blue); }
+    .callout.info .callout-body strong { color: var(--blue-dark); }
+    .callout.warning { background: rgba(217,119,6,0.07); border-left: 3px solid var(--amber); }
+    .callout.warning .callout-body strong { color: #92400e; }
+    .callout.tip     { background: rgba(23,163,74,0.07); border-left: 3px solid var(--green); }
+    .callout.tip .callout-body strong { color: #14532d; }
+    .callout.danger  { background: rgba(220,38,38,0.07); border-left: 3px solid var(--red); }
+    .callout.danger .callout-body strong { color: #7f1d1d; }
+
+    /* ─── Steps ────────────────────────────────────────────────── */
+    .steps {
+      list-style: none;
+      counter-reset: steps;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 16px 0 24px;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      counter-increment: steps;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .step-content { flex: 1; }
+    .step-content p { margin-bottom: 8px; font-size: 14.5px; }
+    .step-content p:last-child { margin-bottom: 0; }
+
+    /* ─── Status badges ────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .badge-pending  { background: #fff7ed; color: #92400e; border: 1px solid #fed7aa; }
+    .badge-pending::before  { background: var(--amber); }
+    .badge-approved { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; }
+    .badge-approved::before { background: var(--green); }
+    .badge-declined { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; }
+    .badge-declined::before { background: var(--red); }
+    .badge-error    { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; }
+    .badge-error::before    { background: var(--red); }
+
+    /* ─── Check list ───────────────────────────────────────────── */
+    .checklist {
+      list-style: none;
+      margin: 16px 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .checklist li::before {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ─── Flow diagram ─────────────────────────────────────────── */
+    .flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin: 20px 0 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .flow::before {
+      content: 'VERIFICATION FLOW';
+      position: absolute;
+      top: 16px; right: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 12px 0;
+    }
+    .flow-step:not(:last-child) {
+      border-bottom: 1px dashed var(--border);
+    }
+    .flow-dot {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .flow-dot.blue  { background: var(--blue-faint); color: var(--blue); border: 1.5px solid rgba(0,106,255,0.25); }
+    .flow-dot.gray  { background: var(--surface-alt); color: var(--text-muted); border: 1.5px solid var(--border); }
+    .flow-dot.green { background: rgba(23,163,74,0.1); color: var(--green); border: 1.5px solid rgba(23,163,74,0.25); }
+    .flow-step-body { flex: 1; }
+    .flow-step-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .flow-step-desc  { font-size: 13px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+    .flow-step-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0,106,255,0.07);
+      color: var(--blue-dark);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    /* ─── Feature grid ─────────────────────────────────────────── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 16px 0 24px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .feature-card:hover { border-color: rgba(0,106,255,0.3); box-shadow: 0 4px 12px rgba(0,106,255,0.07); }
+    .feature-icon {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .feature-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+    .feature-desc  { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+
+    /* ─── UBO indicator reference ──────────────────────────────── */
+    .indicator-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .indicator-row:last-child { border-bottom: none; }
+    .indicator-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      font-family: sans-serif;
+    }
+    .ind-green  { background: #17a34a; }
+    .ind-amber  { background: #d97706; }
+    .ind-red    { background: #dc2626; }
+    .indicator-label { font-size: 14px; font-weight: 600; color: var(--text); min-width: 140px; }
+    .indicator-desc  { font-size: 13.5px; color: var(--text-muted); }
+
+    /* ─── Troubleshoot cards ───────────────────────────────────── */
+    .trouble-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .trouble-problem {
+      padding: 14px 18px;
+      background: var(--surface-alt);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .trouble-icon { font-size: 16px; flex-shrink: 0; }
+    .trouble-problem p { font-size: 14.5px; font-weight: 600; color: var(--text); margin: 0; }
+    .trouble-solution {
+      padding: 14px 18px;
+      background: var(--surface);
+    }
+    .trouble-solution p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .trouble-solution p:last-child { margin-bottom: 0; }
+
+    /* ─── FAQ ──────────────────────────────────────────────────── */
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+    }
+    .faq-item:first-child { padding-top: 0; }
+    .faq-q {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .faq-a {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ─── Endpoint pills ───────────────────────────────────────── */
+    .endpoint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: var(--code-bg);
+      color: #c9d1e0;
+      padding: 5px 12px;
+      border-radius: 6px;
+      margin: 3px 0;
+    }
+    .method {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .method-post { background: rgba(86,211,100,0.18); color: #56d364; }
+    .method-get  { background: rgba(121,192,255,0.18); color: #79c0ff; }
+
+    /* ─── Page footer ──────────────────────────────────────────── */
+    .page-footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 24px 48px;
+      margin-left: var(--sidebar-w);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-brand {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .footer-brand strong { color: var(--text-secondary); }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .footer-links a:hover { color: var(--blue); }
+
+    /* ─── Mobile ────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+      .sidebar.open { transform: translateX(0); }
+      .content { margin-left: 0; }
+      .page-body { padding: 32px 24px 64px; }
+      .topbar { padding: 0 24px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .menu-toggle {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 36px; height: 36px;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 18px;
+        color: var(--text-secondary);
+      }
+    }
+    .menu-toggle { display: none; }
+
+    /* ─── Utility ──────────────────────────────────────────────── */
+    .mt-0 { margin-top: 0 !important; }
+    .mb-0 { margin-bottom: 0 !important; }
+    hr.section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <img src="https://files.readme.io/24d81639453159ac139a7925f76e6fbed91a6f4673e39f1975304edf7f123aac-Group_1000011212.png"
+         alt="Incode"
+         onerror="this.style.display='none'; this.nextElementSibling.querySelector('.sidebar-brand-name').style.fontSize='16px';" />
+    <div class="sidebar-brand-text">
+      <span class="sidebar-brand-name">Developer Hub</span>
+      <span class="sidebar-brand-sub">Salesforce Integration</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" id="nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Getting Started</div>
+      <a class="nav-item active" href="#overview">Overview</a>
+      <a class="nav-item" href="#how-it-works">How It Works</a>
+      <a class="nav-item" href="#prerequisites">Prerequisites</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Installation &amp; Setup</div>
+      <a class="nav-item" href="#installation">Installation</a>
+      <a class="nav-item" href="#configuration">Configuration</a>
+      <a class="nav-item sub" href="#named-credentials">Named Credentials</a>
+      <a class="nav-item sub" href="#custom-settings">Custom Settings</a>
+      <a class="nav-item sub" href="#webhook-site">Webhook Site</a>
+      <a class="nav-item sub" href="#permission-sets">Permission Sets</a>
+      <a class="nav-item" href="#webhook-registration">Webhook Registration</a>
+      <a class="nav-item" href="#record-pages">Record Pages</a>
+      <a class="nav-item" href="#email-template">Email Template</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Going Live</div>
+      <a class="nav-item" href="#testing">End-to-End Testing</a>
+      <a class="nav-item" href="#production">Switching to Production</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Reference</div>
+      <a class="nav-item" href="#component">Component Reference</a>
+      <a class="nav-item" href="#data-model">Data Model</a>
+      <a class="nav-item" href="#security">Security Model</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Support</div>
+      <a class="nav-item" href="#troubleshooting">Troubleshooting</a>
+      <a class="nav-item" href="#faq">FAQ</a>
+    </div>
+  </nav>
+
+  <div class="sidebar-version">Version <span>1.0</span> &nbsp;·&nbsp; April 2026</div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════════ -->
+<div class="content">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-breadcrumb">
+        <span>Incode Developer Hub</span>
+        <span class="sep">/</span>
+        <span>Integrations</span>
+        <span class="sep">/</span>
+        <span class="current">Salesforce</span>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <span class="topbar-badge">Salesforce Lightning</span>
+      <span class="topbar-updated">Updated April 2026</span>
+    </div>
+  </div>
+
+  <!-- Page body -->
+  <div class="page-body">
+
+    <!-- ── Hero ─────────────────────────────────────────────── -->
+    <div class="page-hero">
+      <div class="page-hero-eyebrow">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#006aff" opacity=".15"/><circle cx="7" cy="7" r="3.5" fill="#006aff"/></svg>
+        Salesforce Integration
+      </div>
+      <h1>Identity Verification<br/>for Salesforce</h1>
+      <p>Connect Incode's eKYB (electronic Know Your Business) platform to your Salesforce org. Trigger business verification, track results, and review session details — all without leaving Salesforce.</p>
+      <div class="hero-tags">
+        <span class="hero-tag">Lightning Web Components</span>
+        <span class="hero-tag">Apex</span>
+        <span class="hero-tag">Contact · Lead · Account</span>
+        <span class="hero-tag">eKYB / eKYC</span>
+        <span class="hero-tag">API v59.0+</span>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         1. OVERVIEW
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="overview">
+      <h2><span class="section-num">1</span> Overview</h2>
+      <p>The <strong>Incode Identity Verification for Salesforce</strong> package installs a full verification workflow directly into your CRM. Once configured, your team can initiate, monitor, and review business identity verifications from any Contact, Lead, or Account record page.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🚀</div>
+          <div class="feature-title">One-Click Requests</div>
+          <div class="feature-desc">Send a verification email from any record with a single click. The email auto-populates from the record's contact details.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Real-Time Updates</div>
+          <div class="feature-desc">Status updates automatically via webhook the moment a session completes — no manual refresh needed.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <div class="feature-title">Full eKYB Output</div>
+          <div class="feature-desc">View verified entity type, field-level results, applied business rules, UBOs, and directors with match indicators.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌍</div>
+          <div class="feature-title">US & EU Support</div>
+          <div class="feature-desc">Automatically adapts output structure for both US (people with titles) and EU (UBO/director verification results).</div>
+        </div>
+      </div>
+
+      <h3>Supported Salesforce Objects</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Object</th><th>Supported</th><th>Auto-populated Fields</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Contact</strong></td><td>✓</td><td>Email, First Name</td></tr>
+            <tr><td><strong>Lead</strong></td><td>✓</td><td>Email, First Name</td></tr>
+            <tr><td><strong>Account</strong></td><td>✓</td><td>Account Name</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Status Lifecycle</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px;">
+        <span class="badge badge-pending">Pending</span>
+        <span class="badge badge-approved">Approved</span>
+        <span class="badge badge-declined">Declined</span>
+        <span class="badge badge-error">Error</span>
+      </div>
+      <p style="margin-top:12px;font-size:13.5px;">Status transitions from <strong>Pending</strong> once Incode fires a webhook. <strong>Approved</strong> means the verification passed your configured business rules. <strong>Declined</strong> means it did not pass. <strong>Error</strong> indicates an unexpected failure during the session.</p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         2. HOW IT WORKS
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="how-it-works">
+      <h2><span class="section-num">2</span> How It Works</h2>
+      <p>The integration bridges Salesforce and the Incode Omni Platform through outbound API calls and an inbound webhook endpoint.</p>
+
+      <div class="flow">
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-dot blue">1</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">User clicks "Request Verification"</div>
+              <div class="flow-step-desc">The LWC component calls <code>IncodeService.startSession()</code> with the record ID, email address, and object type.</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot blue">2</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Session created via Incode API</div>
+              <div class="flow-step-desc">Apex calls <code>POST /omni/start</code> → returns a session token and interview ID.</div>
+              <span class="flow-step-tag">POST /omni/start</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot blue">3</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Hosted verification URL retrieved</div>
+              <div class="flow-step-desc">Apex calls <code>GET /omni/onboarding-url</code> using the session token to obtain the unique verification link.</div>
+              <span class="flow-step-tag">GET /omni/onboarding-url</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot blue">4</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Verification record created &amp; email sent</div>
+              <div class="flow-step-desc">An <code>Incode_Verification__c</code> record is inserted with status <strong>Pending</strong>. Salesforce sends the branded verification email to the contact.</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot gray">5</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Contact completes verification (out-of-band)</div>
+              <div class="flow-step-desc">The contact opens the link on their device and completes the Incode-hosted verification flow.</div>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot green">6</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">Incode fires ONBOARDING_FINISHED webhook</div>
+              <div class="flow-step-desc">The Incode platform POSTs to your Salesforce Site endpoint. <code>IncodeWebhookHandler</code> updates the verification record status and asynchronously fetches the score.</div>
+              <span class="flow-step-tag">POST /incode/webhook → Salesforce Site</span>
+            </div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot green">7</div>
+            <div class="flow-step-body">
+              <div class="flow-step-title">LWC reflects updated status</div>
+              <div class="flow-step-desc">The component polls every 10 seconds, detects the status change, and fires a toast notification. The history row updates to <span class="badge badge-approved" style="font-size:11px;">Approved</span> or <span class="badge badge-declined" style="font-size:11px;">Declined</span>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         3. PREREQUISITES
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="prerequisites">
+      <h2><span class="section-num">3</span> Prerequisites</h2>
+
+      <h3>From Incode</h3>
+      <p>Contact your Incode account team to obtain the following before starting configuration.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Where to find it</th><th>Required</th></tr></thead>
+          <tbody>
+            <tr><td><strong>API Key</strong></td><td>Incode Dashboard → Settings → API Keys</td><td>Yes</td></tr>
+            <tr><td><strong>Configuration ID</strong></td><td>Incode Dashboard → Configurations → active config</td><td>Yes</td></tr>
+            <tr><td><strong>Admin Email</strong></td><td>Your Incode admin user email</td><td>Yes (session detail view)</td></tr>
+            <tr><td><strong>Admin Password</strong></td><td>Your Incode admin user password</td><td>Yes (session detail view)</td></tr>
+            <tr><td><strong>Webhook Secret</strong></td><td>Incode Dashboard → Configurations → Webhooks</td><td>Strongly recommended</td></tr>
+            <tr><td><strong>Environment</strong></td><td>Demo or Production</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Salesforce Requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Edition</strong></td><td>Enterprise, Unlimited, Developer, or Performance</td></tr>
+            <tr><td><strong>My Domain</strong></td><td>Must be enabled and deployed to all users</td></tr>
+            <tr><td><strong>Lightning Experience</strong></td><td>Required — Classic is not supported</td></tr>
+            <tr><td><strong>Administrator Access</strong></td><td>Required for all configuration steps</td></tr>
+            <tr><td><strong>Email Deliverability</strong></td><td>Setup → Email → Deliverability → <em>All Email</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         4. INSTALLATION
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="installation">
+      <h2><span class="section-num">4</span> Installation</h2>
+
+      <h3>Option A — AppExchange <span style="font-size:12px;font-weight:500;color:var(--blue);background:var(--blue-faint);padding:2px 8px;border-radius:20px;margin-left:6px;">Recommended</span></h3>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Navigate to the <strong>Incode Identity Verification</strong> listing on AppExchange.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Click <strong>Get It Now</strong> and choose Production or Sandbox.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content"><p>Select <strong>Install for All Users</strong> — access is controlled via permission sets, not profiles.</p></div></li>
+        <li class="step"><div class="step-num">4</div><div class="step-content"><p>Approve any third-party access prompts and click <strong>Install</strong>.</p></div></li>
+      </ol>
+
+      <h3>Option B — Salesforce CLI</h3>
+      <p>For sandbox-to-sandbox deployments or version-controlled orgs:</p>
+      <div class="code-label">bash</div>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="cm"># Clone the repository</span>
+git clone https://github.com/incode-id/incode-salesforce.git
+cd incode-salesforce
+
+<span class="cm"># Authenticate to your target org</span>
+sf org login web --alias my-org --instance-url https://login.salesforce.com
+
+<span class="cm"># Deploy all metadata</span>
+sf project deploy start \
+  --source-dir force-app \
+  --target-org my-org \
+  --wait 15</code></pre>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body">
+          <strong>Post-deployment</strong>
+          <p>Salesforce Sites deploy in an <em>Inactive</em> state. You must activate the <code>IncodeWebhook</code> site manually in Setup → Sites before webhooks will work.</p>
+        </div>
+      </div>
+
+      <h3>Installation Verification Checklist</h3>
+      <ul class="checklist">
+        <li>Apex classes (8 total) visible at Setup → Apex Classes → search "Incode"</li>
+        <li>LWC component <code>incodeVerification</code> at Setup → Lightning Components</li>
+        <li>Custom object <code>Incode_Verification__c</code> at Setup → Object Manager</li>
+        <li>Custom setting <code>Incode_Config__c</code> at Setup → Custom Settings</li>
+        <li>Named Credentials <code>IncodeAPI</code> and <code>IncodeAPI_Production</code> at Setup → Named Credentials</li>
+        <li>Permission sets <code>Incode_User</code> and <code>Incode_Webhook_Guest</code> at Setup → Permission Sets</li>
+        <li>Salesforce Site <code>IncodeWebhook</code> at Setup → Sites</li>
+        <li>Email template folder <code>Incode Templates</code> at Setup → Classic Email Templates</li>
+      </ul>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         5. CONFIGURATION
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="configuration">
+      <h2><span class="section-num">5</span> Configuration</h2>
+      <p>Work through each sub-section in order. The total time is approximately <strong>30–45 minutes</strong>.</p>
+    </section>
+
+    <section class="doc-section" id="named-credentials" style="padding-left:16px;border-left:2px solid var(--border);">
+      <h3 style="margin-top:0;">5.1 — Named Credentials</h3>
+      <p>Named Credentials store the Incode API base URLs. The package ships with two — one for each environment.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Go to <strong>Setup → Named Credentials</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content">
+          <p>Confirm both entries are present:</p>
+          <div class="table-wrap" style="margin-top:10px;">
+            <table>
+              <thead><tr><th>Developer Name</th><th>Endpoint</th><th>Used when</th></tr></thead>
+              <tbody>
+                <tr><td><code>IncodeAPI</code></td><td><code>https://demo-api.incodesmile.com</code></td><td>Use Production API = unchecked</td></tr>
+                <tr><td><code>IncodeAPI_Production</code></td><td><code>https://saas-api.incodesmile.com</code></td><td>Use Production API = checked</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div></li>
+      </ol>
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div class="callout-body">
+          <strong>No URL changes needed</strong>
+          <p>The package selects the correct Named Credential at runtime based on the <code>Use_Production_API__c</code> checkbox in Custom Settings. You never need to edit the endpoint URLs.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-section" id="custom-settings" style="padding-left:16px;border-left:2px solid var(--border);">
+      <h3 style="margin-top:0;">5.2 — Custom Settings</h3>
+      <p>This is the most critical configuration step. The package will not function without a valid API Key and Configuration ID.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Go to <strong>Setup → Custom Settings → Incode Config → Manage</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Click <strong>New</strong> in the Default Organization Level Value section.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content">
+          <p>Fill in the following fields:</p>
+          <div class="table-wrap" style="margin-top:10px;">
+            <table>
+              <thead><tr><th>Field</th><th>Value</th><th>Required</th></tr></thead>
+              <tbody>
+                <tr><td><code>API_Key__c</code></td><td>Your Incode API Key</td><td>Yes</td></tr>
+                <tr><td><code>Configuration_ID__c</code></td><td>Your Incode Configuration ID</td><td>Yes</td></tr>
+                <tr><td><code>Admin_Email__c</code></td><td>Incode admin user email</td><td>Yes</td></tr>
+                <tr><td><code>Admin_Password__c</code></td><td>Incode admin user password</td><td>Yes</td></tr>
+                <tr><td><code>Webhook_Secret__c</code></td><td>HMAC signing secret (from Incode Dashboard)</td><td>Recommended</td></tr>
+                <tr><td><code>Use_Production_API__c</code></td><td>Leave <strong>unchecked</strong> during initial setup</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div></li>
+        <li class="step"><div class="step-num">4</div><div class="step-content"><p>Click <strong>Save</strong>.</p></div></li>
+      </ol>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body">
+          <strong>Start with Demo</strong>
+          <p>Always validate end-to-end in the Demo environment before checking the <em>Use Production API</em> box. Demo uses real Incode services with test credentials — no production data is affected.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="doc-section" id="webhook-site" style="padding-left:16px;border-left:2px solid var(--border);">
+      <h3 style="margin-top:0;">5.3 — Activating the Webhook Site</h3>
+      <p>The Incode platform needs a public HTTPS endpoint to deliver verification results back to Salesforce. This is handled by a Salesforce Site called <strong>IncodeWebhook</strong>.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Go to <strong>Setup → Sites</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Find <strong>IncodeWebhook</strong>. If status is <em>Inactive</em>, click <strong>Activate</strong>.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content">
+          <p>Note your full webhook endpoint URL — you will need this in Section 6:</p>
+          <pre><code><span class="url">https://&lt;your-domain&gt;.my.salesforce-sites.com/IncodeWebhook/services/apexrest/incode/webhook</span></code></pre>
+        </div></li>
+      </ol>
+    </section>
+
+    <section class="doc-section" id="permission-sets" style="padding-left:16px;border-left:2px solid var(--border);">
+      <h3 style="margin-top:0;">5.4 — Assigning Permission Sets</h3>
+      <p>Two permission sets are included. Both must be assigned correctly.</p>
+
+      <h4>Incode_User — Salesforce users who request verifications</h4>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Go to <strong>Setup → Permission Sets → Incode User → Manage Assignments → Add Assignments</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Select the relevant users (sales team, operations, etc.) and click <strong>Assign</strong>.</p></div></li>
+      </ol>
+
+      <h4>Incode_Webhook_Guest — Site Guest User (required for webhooks)</h4>
+      <div class="callout danger">
+        <span class="callout-icon">🔴</span>
+        <div class="callout-body">
+          <strong>Critical step</strong>
+          <p>Without this assignment, incoming webhooks will fail silently. Verifications will stay <em>Pending</em> indefinitely even after the contact completes the flow.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Go to <strong>Setup → Sites → IncodeWebhook → Public Access Settings</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Click <strong>View Users</strong> → click the Guest User record (e.g., <em>"Site Guest User, IncodeWebhook"</em>).</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content"><p>Scroll to <strong>Permission Set Assignments → Edit Assignments</strong>. Move <strong>Incode Webhook Guest</strong> to Enabled. Click <strong>Save</strong>.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         6. WEBHOOK REGISTRATION
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="webhook-registration">
+      <h2><span class="section-num">6</span> Webhook Registration</h2>
+      <p>Register your Salesforce endpoint in the Incode Dashboard so the Incode platform knows where to deliver verification results.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Log in to the <strong>Incode Dashboard</strong> and open your Configuration (the one whose ID you entered in Section 5.2).</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Navigate to the <strong>Webhooks</strong> section and click <strong>Add Webhook</strong>.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content">
+          <p>Fill in the form:</p>
+          <div class="table-wrap" style="margin-top:10px;">
+            <table>
+              <thead><tr><th>Field</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td><strong>URL</strong></td><td>Your Salesforce Site webhook URL from Section 5.3</td></tr>
+                <tr><td><strong>Method</strong></td><td><code>POST</code></td></tr>
+                <tr><td><strong>Event</strong></td><td><code>ONBOARDING_FINISHED</code></td></tr>
+                <tr><td><strong>Secret</strong></td><td>The value you entered in <code>Webhook_Secret__c</code> (if any)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div></li>
+        <li class="step"><div class="step-num">4</div><div class="step-content"><p>Click <strong>Save</strong>.</p></div></li>
+      </ol>
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div class="callout-body">
+          <strong>Why ONBOARDING_FINISHED?</strong>
+          <p>This is the event Incode fires when a session ends — regardless of pass or fail result. Despite some versions of the API reference showing <code>SESSION_SUCCEEDED</code>, the actual event fired in both Demo and Production is <code>ONBOARDING_FINISHED</code>. The webhook handler normalises both variants.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         7. RECORD PAGES
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="record-pages">
+      <h2><span class="section-num">7</span> Adding the Component to Record Pages</h2>
+      <p>The component must be added manually via the Lightning App Builder. Repeat for each object type (Contact, Lead, Account) you want to enable.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Open any <strong>Contact</strong> record and click <strong>gear icon → Edit Page</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>In the left component panel, scroll to <strong>Custom</strong>. Locate <strong>Incode Verification</strong>.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content"><p>Drag the component to the right-hand sidebar of the record layout.</p></div></li>
+        <li class="step"><div class="step-num">4</div><div class="step-content"><p>Click <strong>Save → Activate → Activate for All Users → Save</strong>.</p></div></li>
+        <li class="step"><div class="step-num">5</div><div class="step-content"><p>Repeat for <strong>Lead</strong> and <strong>Account</strong> record pages as needed.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         8. EMAIL TEMPLATE
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="email-template">
+      <h2><span class="section-num">8</span> Email Template Customization</h2>
+      <p>When a verification is requested, Salesforce automatically sends a branded email containing the verification link. The default template is production-ready but can be customized.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Go to <strong>Setup → Classic Email Templates → Incode Templates → Incode Verification Request</strong>.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Click <strong>Edit</strong> and adjust the subject line, body text, or branding as needed.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content"><p>Click <strong>Save</strong>. Use <strong>Send Test and Verify Merge Fields</strong> to preview before going live.</p></div></li>
+      </ol>
+      <div class="callout danger">
+        <span class="callout-icon">🔴</span>
+        <div class="callout-body">
+          <strong>Do not remove <code>{!verificationUrl}</code></strong>
+          <p>This merge field is replaced at send time with the unique Incode verification link. Removing or renaming it will result in emails with no actionable link.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         9. TESTING
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="testing">
+      <h2><span class="section-num">9</span> End-to-End Testing</h2>
+      <p>Complete a full test run before rolling out to your team.</p>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Open a <strong>Contact</strong> record. Confirm the email field is pre-filled or enter a test email you can access.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Click <strong>Request Verification</strong>. The history table should show a <span class="badge badge-pending" style="font-size:11px;">Pending</span> row within seconds.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content"><p>Check the inbox — a verification email should arrive within 1–2 minutes. Click the link and complete the Incode-hosted flow.</p></div></li>
+        <li class="step"><div class="step-num">4</div><div class="step-content"><p>Return to Salesforce. Within ~10 seconds, the status row should update to <span class="badge badge-approved" style="font-size:11px;">Approved</span> or <span class="badge badge-declined" style="font-size:11px;">Declined</span>.</p></div></li>
+        <li class="step"><div class="step-num">5</div><div class="step-content"><p>Click the completed row to open the <strong>Session Details</strong> modal. Confirm the eKYB output is visible.</p></div></li>
+      </ol>
+
+      <h3>Test Validation Matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>What you observe</th><th>What it validates</th></tr></thead>
+          <tbody>
+            <tr><td>Row appears as Pending</td><td>API Key, Configuration ID, and Named Credentials are correct</td></tr>
+            <tr><td>Verification email is received</td><td>Salesforce email deliverability is enabled</td></tr>
+            <tr><td>Status updates after completion</td><td>Webhook is registered, Site is Active, Guest User has the permission set</td></tr>
+            <tr><td>Session Details modal loads</td><td>Admin Email and Admin Password are correct</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         10. PRODUCTION
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="production">
+      <h2><span class="section-num">10</span> Switching to Production</h2>
+      <p>Once testing in Demo is successful, follow these steps to go live.</p>
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body">
+          <strong>Two credentials to update</strong>
+          <p>The Demo and Production API Keys are different. You must update <strong>both</strong> the Custom Settings field and the <code>IncodeAPI_Production</code> Named Credential password. Missing either will cause authentication failures.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li class="step"><div class="step-num">1</div><div class="step-content"><p>Obtain your <strong>Production API Key</strong> from the Incode Dashboard.</p></div></li>
+        <li class="step"><div class="step-num">2</div><div class="step-content"><p>Go to <strong>Setup → Custom Settings → Incode Config → Manage → Edit</strong>. Update <code>API_Key__c</code> to the Production key and check <strong>Use Production API</strong>. Click <strong>Save</strong>.</p></div></li>
+        <li class="step"><div class="step-num">3</div><div class="step-content"><p>Go to <strong>Setup → Named Credentials → IncodeAPI_Production → Edit</strong>. Update the <strong>Password</strong> field with the Production API Key. Click <strong>Save</strong>.</p></div></li>
+        <li class="step"><div class="step-num">4</div><div class="step-content"><p>In the <strong>Incode Dashboard</strong>, register the webhook URL under your <strong>Production</strong> configuration (same steps as Section 6).</p></div></li>
+      </ol>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body">
+          <strong>Rolling back</strong>
+          <p>To revert to Demo: uncheck <em>Use Production API</em> in Custom Settings and restore the Demo API Key. No redeployment is needed.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         11. COMPONENT REFERENCE
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="component">
+      <h2><span class="section-num">11</span> Component Reference</h2>
+
+      <h3>Incode Business Verification (LWC)</h3>
+      <p>The sidebar component placed on Contact, Lead, and Account record pages. Target: <code>lightning__RecordPage</code>.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Email Pre-fill</strong></td><td>Auto-populates from the record's <code>Email</code> field (Contact/Lead)</td></tr>
+            <tr><td><strong>Request Verification</strong></td><td>Initiates a new session and sends the verification email in one action</td></tr>
+            <tr><td><strong>History Table</strong></td><td>Lists all past attempts, newest first, with the most recent marked "latest"</td></tr>
+            <tr><td><strong>Auto-polling</strong></td><td>Checks for status updates every 10 seconds while any session is Pending; stops on final status</td></tr>
+            <tr><td><strong>Toast Notifications</strong></td><td>Fires on request success and on status change (Approved/Declined)</td></tr>
+            <tr><td><strong>Session Details Modal</strong></td><td>Opens on click for completed sessions; shows full eKYB output</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Session Details Modal</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Section</th><th>Content</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Customer Input</strong></td><td>Business name, Tax ID, address, submitted UBO names, submitted directors</td></tr>
+            <tr><td><strong>eKYB Output</strong></td><td>Entity type, overall result badge, per-field verification table, notes, applied business rule</td></tr>
+            <tr><td><strong>Key People &amp; UBOs</strong></td><td>Collapsible per-person cards with individual title chips and match status indicators</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>UBO Match Status Indicators</h3>
+      <p>Each person card in the Key People &amp; UBOs section shows a coloured indicator when a name was submitted for verification. Hover over the dot to reveal the match result text.</p>
+      <div style="margin:16px 0 24px;">
+        <div class="indicator-row">
+          <div class="indicator-dot ind-green">✓</div>
+          <div class="indicator-label">Verified</div>
+          <div class="indicator-desc">The name was submitted and exactly matched records</div>
+        </div>
+        <div class="indicator-row">
+          <div class="indicator-dot ind-amber">~</div>
+          <div class="indicator-label">Approximate Match</div>
+          <div class="indicator-desc">The name was submitted and a close (non-exact) match was found</div>
+        </div>
+        <div class="indicator-row">
+          <div class="indicator-dot ind-red">!</div>
+          <div class="indicator-label">Unverified</div>
+          <div class="indicator-desc">The name was submitted but could not be matched in records</div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">ℹ️</span>
+        <div class="callout-body">
+          <strong>US vs EU region behaviour</strong>
+          <p><strong>US sessions</strong> show people with job titles (CEO, PRESIDENT, etc.) sourced from <code>businessVerification.people</code>. <strong>EU sessions</strong> show UBOs and Directors as separate entries sourced from <code>uboNameVerificationResults</code> and <code>directorsVerificationResults</code>, each with their own match status.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         12. DATA MODEL
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="data-model">
+      <h2><span class="section-num">12</span> Data Model Reference</h2>
+
+      <h3>Incode_Verification__c</h3>
+      <p>One record per verification attempt. Multiple attempts are allowed per Contact/Lead/Account.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>Session_ID__c</code></td><td>Text(255)</td><td>Incode <code>interviewId</code> — the durable session identifier</td></tr>
+            <tr><td><code>Status__c</code></td><td>Picklist</td><td><code>Pending</code>, <code>Approved</code>, <code>Declined</code>, <code>Error</code></td></tr>
+            <tr><td><code>Requested_Date__c</code></td><td>DateTime</td><td>When the Salesforce user initiated the request</td></tr>
+            <tr><td><code>Completed_Date__c</code></td><td>DateTime</td><td>When the completion webhook was received</td></tr>
+            <tr><td><code>Score__c</code></td><td>Number(5,2)</td><td>Overall verification score (0–100), fetched asynchronously</td></tr>
+            <tr><td><code>Verification_URL__c</code></td><td>URL</td><td>The Incode-hosted onboarding link sent to the contact</td></tr>
+            <tr><td><code>Raw_Event_Type__c</code></td><td>Text(255)</td><td>Raw <code>event_type</code> value from the webhook (for debugging)</td></tr>
+            <tr><td><code>Contact__c</code></td><td>Lookup(Contact)</td><td>Populated when initiated from a Contact record</td></tr>
+            <tr><td><code>Lead__c</code></td><td>Lookup(Lead)</td><td>Populated when initiated from a Lead record</td></tr>
+            <tr><td><code>Account__c</code></td><td>Lookup(Account)</td><td>Populated when initiated from an Account record</td></tr>
+            <tr><td><code>Session_Details__c</code></td><td>Long Text(131,072)</td><td>Cached full session JSON — populated on first modal open</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Incode_Config__c (Custom Setting — Hierarchy)</h3>
+      <p>Org-level configuration. System Administrators only.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>API_Key__c</code></td><td>Text(255)</td><td>Incode API Key — injected into <code>x-api-key</code> request headers</td></tr>
+            <tr><td><code>Configuration_ID__c</code></td><td>Text(255)</td><td>Incode Configuration ID — sent with every <code>/omni/start</code> request</td></tr>
+            <tr><td><code>Admin_Email__c</code></td><td>Text(255)</td><td>Admin email for <code>/executive/log-in</code> authentication</td></tr>
+            <tr><td><code>Admin_Password__c</code></td><td>Text(255)</td><td>Admin password for <code>/executive/log-in</code> authentication</td></tr>
+            <tr><td><code>Webhook_Secret__c</code></td><td>Text(255)</td><td>HMAC-SHA256 signing secret for webhook validation</td></tr>
+            <tr><td><code>Use_Production_API__c</code></td><td>Checkbox</td><td>Controls which Named Credential and environment is used</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         13. SECURITY
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="security">
+      <h2><span class="section-num">13</span> Security Model</h2>
+
+      <h3>Apex Sharing</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Class</th><th>Sharing</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td><code>IncodeService</code></td><td><code>with sharing</code></td><td>Standard sharing rules apply to all record queries</td></tr>
+            <tr><td><code>IncodeEmailService</code></td><td><code>with sharing</code></td><td>Runs in logged-in user context</td></tr>
+            <tr><td><code>IncodeWebhookHandler</code></td><td><code>without sharing</code></td><td>Site Guest User has no default access to custom objects; intentional and safe — handler only updates the specific record matching the incoming session ID</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Webhook Signature Validation</h3>
+      <p>When <code>Webhook_Secret__c</code> is populated, every inbound request is validated before any data is touched:</p>
+      <ol style="padding-left:20px;line-height:1.9;color:var(--text-secondary);font-size:14.5px;">
+        <li>Read the <code>X-Incode-Signature</code> header from the request.</li>
+        <li>Compute HMAC-SHA256 of the raw request body using the stored secret.</li>
+        <li>If signatures do not match → return <strong>HTTP 401</strong>. No data is changed.</li>
+      </ol>
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body">
+          <strong>Strongly recommended for production</strong>
+          <p>Webhook signature validation prevents unauthorized parties from sending forged status updates to your Salesforce org. Enable it by setting <code>Webhook_Secret__c</code> in Custom Settings and using the same value in the Incode Dashboard.</p>
+        </div>
+      </div>
+
+      <h3>API Endpoints Used</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin:14px 0 20px;">
+        <div><span class="endpoint"><span class="method method-post">POST</span>/omni/start</span></div>
+        <div><span class="endpoint"><span class="method method-get">GET</span>/omni/onboarding-url</span></div>
+        <div><span class="endpoint"><span class="method method-get">GET</span>/omni/get/score</span></div>
+        <div><span class="endpoint"><span class="method method-get">GET</span>/omni/single-session</span></div>
+        <div><span class="endpoint"><span class="method method-post">POST</span>/executive/log-in</span></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         14. TROUBLESHOOTING
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="troubleshooting">
+      <h2><span class="section-num">14</span> Troubleshooting</h2>
+
+      <div class="trouble-card">
+        <div class="trouble-problem">
+          <span class="trouble-icon">⚡</span>
+          <p>"Request Verification" shows an error immediately</p>
+        </div>
+        <div class="trouble-solution">
+          <p><strong>Likely cause:</strong> Missing or incorrect API Key / Configuration ID in Custom Settings.</p>
+          <p>Go to <strong>Setup → Custom Settings → Incode Config → Manage → Edit</strong>. Verify <code>API_Key__c</code> and <code>Configuration_ID__c</code> contain no extra whitespace. Confirm the <em>Use Production API</em> checkbox matches your intended environment.</p>
+        </div>
+      </div>
+
+      <div class="trouble-card">
+        <div class="trouble-problem">
+          <span class="trouble-icon">📧</span>
+          <p>Verification email is not received</p>
+        </div>
+        <div class="trouble-solution">
+          <p><strong>Likely cause:</strong> Email deliverability restriction or spam filter.</p>
+          <p>Go to <strong>Setup → Email → Deliverability</strong>. Confirm <em>Access Level</em> is <strong>All Email</strong>. Check the recipient's spam folder. Use <em>Send Test</em> on the email template to confirm Salesforce can send from the org.</p>
+        </div>
+      </div>
+
+      <div class="trouble-card">
+        <div class="trouble-problem">
+          <span class="trouble-icon">🔄</span>
+          <p>Status stays Pending after the contact completes the flow</p>
+        </div>
+        <div class="trouble-solution">
+          <p>Work through each check in order:</p>
+          <p><strong>1.</strong> <strong>Site Active?</strong> — Setup → Sites → confirm IncodeWebhook shows <em>Active</em>.</p>
+          <p><strong>2.</strong> <strong>Correct event registered?</strong> — Incode Dashboard → Configuration → Webhooks → confirm event is <code>ONBOARDING_FINISHED</code>.</p>
+          <p><strong>3.</strong> <strong>Correct webhook URL?</strong> — Must end in <code>/IncodeWebhook/services/apexrest/incode/webhook</code>.</p>
+          <p><strong>4.</strong> <strong>Guest User permission set?</strong> — Setup → Sites → IncodeWebhook → Public Access Settings → View Users → confirm <code>Incode_Webhook_Guest</code> is assigned.</p>
+          <p><strong>5.</strong> <strong>Check Site History</strong> — Setup → Sites → IncodeWebhook → View Site History. Look for HTTP 4xx/5xx on incoming POST requests. 401 = secret mismatch. 403/500 = permission issue.</p>
+        </div>
+      </div>
+
+      <div class="trouble-card">
+        <div class="trouble-problem">
+          <span class="trouble-icon">🔍</span>
+          <p>Session Details modal shows an error</p>
+        </div>
+        <div class="trouble-solution">
+          <p><strong>Likely cause:</strong> Admin Email or Admin Password is missing or incorrect.</p>
+          <p>Go to <strong>Setup → Custom Settings → Incode Config → Manage → Edit</strong>. Verify <code>Admin_Email__c</code> and <code>Admin_Password__c</code> match the credentials you use to log in to the Incode Dashboard.</p>
+        </div>
+      </div>
+
+      <div class="trouble-card">
+        <div class="trouble-problem">
+          <span class="trouble-icon">👁</span>
+          <p>Component is not visible on the record page</p>
+        </div>
+        <div class="trouble-solution">
+          <p>The component must be added via Lightning App Builder. Follow Section 7. Confirm you clicked <strong>Activate</strong> after saving and that the activation applies to the correct app/profile/record type combination.</p>
+        </div>
+      </div>
+
+      <div class="trouble-card">
+        <div class="trouble-problem">
+          <span class="trouble-icon">🔒</span>
+          <p>Component shows a configuration error on load</p>
+        </div>
+        <div class="trouble-solution">
+          <p>The logged-in user does not have the <code>Incode_User</code> permission set. Assign it via Setup → Permission Sets → Incode User → Manage Assignments.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         15. FAQ
+    ═══════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="faq">
+      <h2><span class="section-num">15</span> FAQ</h2>
+
+      <div class="faq-item">
+        <div class="faq-q">Can multiple verification attempts be made for the same record?</div>
+        <div class="faq-a">Yes. Each click of "Request Verification" creates a new <code>Incode_Verification__c</code> record. The component shows the full history with the most recent attempt at the top, marked with a "latest" badge.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Does the component work with sandbox or developer orgs?</div>
+        <div class="faq-a">Yes. Use the Demo environment (leave <em>Use Production API</em> unchecked) and point the Incode Dashboard webhook at your sandbox Site URL.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">What happens if the contact's email address is wrong?</div>
+        <div class="faq-a">The verification email will bounce or go undelivered. The <code>Incode_Verification__c</code> record will stay in <strong>Pending</strong> indefinitely. You can initiate a new verification request with the corrected email — the old Pending record will remain in the history.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Can verification emails be sent in languages other than English?</div>
+        <div class="faq-a">The email template can be edited to any language (Section 8). The Incode-hosted verification flow language is controlled by the <code>language</code> parameter in the session request, currently set to <code>en-US</code>. Contact Incode support if multi-language session flows are required.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Is personal data from the verification stored in Salesforce?</div>
+        <div class="faq-a">The <code>Incode_Verification__c</code> record stores status, score, timestamps, and a cached copy of the full session JSON (up to 128KB) for use in the detail view. No biometric data (ID document images, selfie photos) is stored in Salesforce.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">Does this support Person Accounts?</div>
+        <div class="faq-a">Person Accounts are not explicitly supported in this version. The component targets standard Account records. Support for Person Accounts can be added in a future release.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">How long does the verification link remain valid?</div>
+        <div class="faq-a">Session link validity is configured in the Incode Dashboard under the flow configuration. Contact your Incode account team to adjust the expiry window for your specific use case.</div>
+      </div>
+
+      <div class="faq-item" style="border-bottom:none;">
+        <div class="faq-q">What Incode API endpoints does this integration use?</div>
+        <div class="faq-a" style="display:flex;flex-direction:column;gap:7px;margin-top:10px;">
+          <div><span class="endpoint"><span class="method method-post">POST</span>/omni/start</span> <span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Create a new verification session</span></div>
+          <div><span class="endpoint"><span class="method method-get">GET</span>/omni/onboarding-url</span> <span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Retrieve the hosted verification link</span></div>
+          <div><span class="endpoint"><span class="method method-get">GET</span>/omni/get/score</span> <span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Fetch verification score after completion</span></div>
+          <div><span class="endpoint"><span class="method method-get">GET</span>/omni/single-session</span> <span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Load full session details for the modal</span></div>
+          <div><span class="endpoint"><span class="method method-post">POST</span>/executive/log-in</span> <span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Authenticate admin to access session data</span></div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-body -->
+</div><!-- /content -->
+
+<!-- Footer -->
+<footer class="page-footer">
+  <div class="footer-brand"><strong>Incode Technologies Inc.</strong> &nbsp;·&nbsp; Salesforce Integration Guide v1.0</div>
+  <div class="footer-links">
+    <a href="https://developer.incode.com" target="_blank">Developer Hub</a>
+    <a href="https://developer.incode.com/docs/omni-platform-1" target="_blank">API Reference</a>
+    <a href="mailto:support@incode.com">Support</a>
+  </div>
+</footer>
+
+<script>
+  // ── Scroll-spy: highlight active nav item ──────────────────────
+  const sections = document.querySelectorAll('section.doc-section');
+  const navLinks = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // ── Copy-to-clipboard ──────────────────────────────────────────
+  function copyCode(btn) {
+    const pre = btn.closest('pre');
+    const code = pre.querySelector('code');
+    const text = code.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // ── Close sidebar on nav click (mobile) ──────────────────────
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+    });
+  });
+</script>
+</body>
+</html>

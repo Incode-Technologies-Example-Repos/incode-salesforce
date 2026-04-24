@@ -1,4 +1,4 @@
-/* Status pill — shared base */
+/* ── Status pill — history list ─────────────────────────────────────── */
 .badge-success,
 .badge-error,
 .badge-pending {
@@ -12,19 +12,25 @@
     color: #ffffff;
 }
 
-.badge-success { background-color: #2e844a; } /* green  */
-.badge-error   { background-color: #ba0517; } /* red    */
-.badge-pending { background-color: #dd7a01; } /* orange */
+.badge-success { background-color: #2e844a; }
+.badge-error   { background-color: #ba0517; }
+.badge-pending { background-color: #dd7a01; }
 
-/* History rows */
+/* ── History rows ────────────────────────────────────────────────────── */
 .history-row {
     background: #f3f2f2;
     border-radius: 4px;
     padding: 10px 12px;
     border-left: 4px solid #dddbda;
+    cursor: pointer;
+    transition: background 0.15s;
 }
 
-/* "latest" pill next to the badge */
+.history-row:hover {
+    background: #e8e8e8;
+}
+
+/* "latest" pill */
 .latest-tag {
     display: inline-block;
     font-size: 10px;
@@ -36,6 +42,17 @@
     border-radius: 10px;
     padding: 1px 6px;
     vertical-align: middle;
+}
+
+/* "View Details" button */
+.view-details-btn {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0070d2;
+    text-decoration: underline;
+    letter-spacing: 0.2px;
 }
 
 /* Polling indicator */
@@ -63,4 +80,503 @@
     color: #3e3e3c;
     font-family: monospace;
     word-break: break-all;
+}
+
+/* ── Modal backdrop ──────────────────────────────────────────────────── */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 8000;
+}
+
+/* ── Modal container ─────────────────────────────────────────────────── */
+.modal-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(820px, 94vw);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+    z-index: 9000;
+    overflow: hidden;
+}
+
+/* ── Modal header ────────────────────────────────────────────────────── */
+.modal-header {
+    background: #16325c;
+    color: #ffffff;
+    padding: 16px 20px;
+    flex-shrink: 0;
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 4px 0;
+}
+
+.modal-event-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 8px;
+    padding: 1px 8px;
+    vertical-align: middle;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: 4px;
+    opacity: 0.8;
+}
+.modal-close-btn:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+
+/* ── Modal body ──────────────────────────────────────────────────────── */
+.modal-body {
+    overflow-y: auto;
+    padding: 20px;
+    flex: 1;
+}
+
+/* ── Modal section ───────────────────────────────────────────────────── */
+.modal-section {
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.modal-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #16325c;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #16325c;
+}
+
+/* ── Modal field ─────────────────────────────────────────────────────── */
+.modal-field {
+    margin-bottom: 8px;
+}
+.modal-field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #706e6b;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin: 0 0 2px 0;
+}
+.modal-field-value {
+    font-size: 13px;
+    color: #181818;
+    margin: 0;
+    word-break: break-word;
+}
+
+/* ── eKYB header bar ─────────────────────────────────────────────────── */
+.ekyb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #16325c;
+}
+.ekyb-entity-type {
+    font-size: 12px;
+    color: #706e6b;
+    margin: 4px 0 0 0;
+}
+.ekyb-overall {
+    text-align: right;
+}
+.ekyb-overall-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #706e6b;
+    margin: 0 0 4px 0;
+}
+
+/* ── Verification results table ──────────────────────────────────────── */
+.ver-table-heading {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #3e3e3c;
+    margin: 0 0 6px 0;
+}
+
+.ver-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.ver-table-th {
+    background: #f3f2f2;
+    color: #3e3e3c;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #dddbda;
+}
+.ver-table-th_result {
+    width: 180px;
+    text-align: right;
+}
+
+.ver-table-row {
+    border-bottom: 1px solid #f0f0f0;
+}
+.ver-table-row:last-child {
+    border-bottom: none;
+}
+.ver-table-row:hover {
+    background: #fafafa;
+}
+
+.ver-table-label {
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #3e3e3c;
+}
+.ver-table-result {
+    padding: 9px 12px;
+    text-align: right;
+}
+
+/* Badge states */
+.ver-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.ver-badge-ok      { background: #e3f5e9; color: #2e844a; border: 1px solid #91db8b; }
+.ver-badge-fail    { background: #fde8e8; color: #ba0517; border: 1px solid #f5a8a8; }
+.ver-badge-unknown { background: #fef0d0; color: #a86400; border: 1px solid #f5c96e; }
+.ver-badge-na      { background: #f3f2f2; color: #706e6b; border: 1px solid #dddbda; }
+
+/* ── Verification messages box ───────────────────────────────────────── */
+.ver-messages-box {
+    background: #fef9ec;
+    border: 1px solid #f5c96e;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+}
+.ver-messages-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #a86400;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+}
+.ver-messages {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.ver-message-item {
+    font-size: 12px;
+    color: #3e3e3c;
+    padding: 3px 0;
+    line-height: 1.5;
+}
+
+/* ── Applied rule box ────────────────────────────────────────────────── */
+.applied-rule-box {
+    background: #f8f8f8;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+.applied-rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+.applied-rule-caption {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #706e6b;
+    margin: 0 0 2px 0;
+}
+.applied-rule-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #16325c;
+    margin: 0;
+}
+.applied-rule-expr {
+    font-size: 11px;
+    color: #706e6b;
+    font-family: monospace;
+    word-break: break-all;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ── Collapsible UBO / people section ────────────────────────────────── */
+.ubo-section {
+    margin-top: 16px;
+    border: 1px solid #dddbda;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.ubo-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f3f2f2;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #16325c;
+    list-style: none;
+    user-select: none;
+}
+.ubo-summary::-webkit-details-marker { display: none; }
+.ubo-summary::marker { display: none; }
+
+.ubo-section[open] > .ubo-summary {
+    border-bottom: 1px solid #dddbda;
+}
+
+.ubo-summary-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Shared chevron triangle */
+.ubo-chevron-icon {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 6px solid currentColor;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+.ubo-section[open] > .ubo-summary .ubo-chevron-icon {
+    transform: rotate(90deg);
+}
+.ubo-person-card[open] > .ubo-person-summary .ubo-chevron-icon {
+    transform: rotate(90deg);
+}
+
+.ubo-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    background: #16325c;
+    color: #fff;
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.ubo-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* ── Per-person collapsible card ─────────────────────────────────────── */
+.ubo-person-card {
+    border-bottom: 1px solid #f0f0f0;
+}
+.ubo-person-card:last-child {
+    border-bottom: none;
+}
+
+.ubo-person-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fff;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background 0.12s;
+}
+.ubo-person-summary::-webkit-details-marker { display: none; }
+.ubo-person-summary::marker { display: none; }
+.ubo-person-summary:hover { background: #f8f8f8; }
+
+.ubo-person-chevron {
+    border-left-color: #706e6b;
+}
+
+.ubo-person-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ubo-person-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #181818;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ubo-person-preview {
+    font-size: 11px;
+    color: #706e6b;
+    margin: 2px 0 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+
+.ubo-title-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: #e8e8e8;
+    color: #3e3e3c;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ubo-person-body {
+    padding: 10px 14px 12px 38px;
+    background: #fafafa;
+    border-top: 1px solid #f0f0f0;
+}
+
+.ubo-title-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ubo-title-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #e8f0fe;
+    color: #16325c;
+    border: 1px solid #c9d9f5;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.ubo-no-titles {
+    font-size: 12px;
+    color: #706e6b;
+    margin: 0;
+}
+
+/* ── UBO match status dot + inline reveal label ──────────────────────── */
+.ubo-tooltip-wrap {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+    cursor: default;
+}
+
+.ubo-status-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 800;
+    font-style: normal;
+    line-height: 1;
+    color: #fff;
+    flex-shrink: 0;
+    font-family: sans-serif;
+}
+
+.ubo-status-dot_verified    { background: #2e844a; }
+.ubo-status-dot_approximate { background: #dd7a01; }
+.ubo-status-dot_unverified  { background: #ba0517; }
+
+/* Label slides in to the right of the dot on hover */
+.ubo-tooltip-text {
+    display: inline-block;
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-left: 0;
+    font-size: 11px;
+    font-weight: 600;
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: sans-serif;
+    color: #3e3e3c;
+    transition: max-width 0.25s ease, margin-left 0.2s ease;
+}
+
+.ubo-tooltip-wrap:hover .ubo-tooltip-text {
+    max-width: 160px;
+    margin-left: 5px;
 }
