@@ -284,14 +284,14 @@ export default function App() {
                   {fieldErrors.taxId && <span className="field-error">{fieldErrors.taxId}</span>}
                 </div>
                 <div className="field">
-                  <label>Street</label>
-                  <input type="text" placeholder="e.g. Mission St"
-                    value={form.street} onChange={e => updateForm('street', e.target.value)} />
-                </div>
-                <div className="field">
                   <label>House / Building No.</label>
                   <input type="text" placeholder="e.g. 101"
                     value={form.houseNo} onChange={e => updateForm('houseNo', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Street</label>
+                  <input type="text" placeholder="e.g. Mission St"
+                    value={form.street} onChange={e => updateForm('street', e.target.value)} />
                 </div>
                 <div className="field full">
                   <label>Address Line 2</label>
