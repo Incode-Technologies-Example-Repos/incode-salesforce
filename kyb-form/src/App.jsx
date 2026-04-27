@@ -2,6 +2,11 @@ import { useState } from 'react';
 import './App.css';
 import { startSession, submitEkyb, finishSession } from './services/incodeApi';
 
+function getUrlParams() {
+  const p = new URLSearchParams(window.location.search);
+  return { token: p.get('token'), interviewId: p.get('interviewId') };
+}
+
 const COUNTRIES = [
   { code: 'US', name: 'United States', flag: '🇺🇸', isEU: false },
   { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', isEU: true },
@@ -202,6 +207,8 @@ function getFinishStatusMeta(action, scoreStatus) {
 }
 
 export default function App() {
+  const { token: presetToken, interviewId: presetInterviewId } = getUrlParams();
+
   const [step, setStep] = useState(1);
   const [country, setCountry] = useState(null);
   const [form, setForm] = useState({
@@ -243,8 +250,7 @@ export default function App() {
     setStep(4);
 
     try {
-      const session = await startSession();
-      const token = session.token;
+      const token = presetToken || (await startSession()).token;
 
       const uboNames = ubos
         .filter(p => p.firstName.trim() || p.lastName.trim())
