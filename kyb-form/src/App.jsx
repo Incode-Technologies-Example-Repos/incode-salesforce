@@ -305,7 +305,7 @@ export default function App() {
                     className={fieldErrors.city ? 'error' : ''} />
                   {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
                 </div>
-                {country?.code === 'US' ? (
+                {country?.code === 'US' && (
                   <div className="field">
                     <label>State <span className="required-star">*</span></label>
                     <select value={form.state} onChange={e => updateForm('state', e.target.value)}
@@ -316,12 +316,6 @@ export default function App() {
                       ))}
                     </select>
                     {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
-                  </div>
-                ) : (
-                  <div className="field">
-                    <label>Region / State</label>
-                    <input type="text" placeholder="e.g. Île-de-France"
-                      value={form.state} onChange={e => updateForm('state', e.target.value)} />
                   </div>
                 )}
                 <div className="field">
