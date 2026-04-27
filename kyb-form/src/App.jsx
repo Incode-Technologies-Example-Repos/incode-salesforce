@@ -37,7 +37,7 @@ function IncodeLogo({ className }) {
   );
 }
 
-const flag = code => [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E0 + c.charCodeAt(0) - 65)).join('');
+const FlagIcon = ({ code }) => <span className={`fi fi-${code.toLowerCase()}`} style={{ width: 32, height: 24, borderRadius: 3, display: 'inline-block', flexShrink: 0 }} />;
 
 const EU_CODES = new Set(['GB','FR','DE','IT','ES']);
 
@@ -486,7 +486,7 @@ export default function App() {
                       <button key={c.code} type="button"
                         className={`country-card ${country?.code === c.code ? 'selected' : ''}`}
                         onClick={() => handleCountrySelect(c)}>
-                        <span className="country-flag">{flag(c.code)}</span>
+                        <FlagIcon code={c.code} />
                         <span className="country-name">{c.name}</span>
                       </button>
                     ))}
