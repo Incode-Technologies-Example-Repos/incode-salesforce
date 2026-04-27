@@ -37,13 +37,226 @@ function IncodeLogo({ className }) {
   );
 }
 
+const flag = code => [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E0 + c.charCodeAt(0) - 65)).join('');
+
+const EU_CODES = new Set([
+  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR',
+  'DE','GR','HU','IE','IT','LV','LT','LU','MT','PL',
+  'PT','RO','SK','SI','ES','SE','GB',
+]);
+
 const COUNTRIES = [
-  { code: 'US', name: 'United States', flag: '🇺🇸', isEU: false },
-  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', isEU: true },
-  { code: 'FR', name: 'France',         flag: '🇫🇷', isEU: true },
-  { code: 'DE', name: 'Germany',        flag: '🇩🇪', isEU: true },
-  { code: 'IT', name: 'Italy',          flag: '🇮🇹', isEU: true },
-  { code: 'ES', name: 'Spain',          flag: '🇪🇸', isEU: true },
+  { code: 'AF', name: 'Afghanistan' },
+  { code: 'AL', name: 'Albania' },
+  { code: 'DZ', name: 'Algeria' },
+  { code: 'AO', name: 'Angola' },
+  { code: 'AI', name: 'Anguilla' },
+  { code: 'AG', name: 'Antigua and Barbuda' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'AM', name: 'Armenia' },
+  { code: 'AW', name: 'Aruba' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'AT', name: 'Austria' },
+  { code: 'AZ', name: 'Azerbaijan' },
+  { code: 'BS', name: 'Bahamas' },
+  { code: 'BH', name: 'Bahrain' },
+  { code: 'BD', name: 'Bangladesh' },
+  { code: 'BB', name: 'Barbados' },
+  { code: 'BY', name: 'Belarus' },
+  { code: 'BE', name: 'Belgium' },
+  { code: 'BZ', name: 'Belize' },
+  { code: 'BJ', name: 'Benin' },
+  { code: 'BM', name: 'Bermuda' },
+  { code: 'BT', name: 'Bhutan' },
+  { code: 'BO', name: 'Bolivia' },
+  { code: 'BQ', name: 'Bonaire' },
+  { code: 'BA', name: 'Bosnia and Herzegovina' },
+  { code: 'BW', name: 'Botswana' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'VG', name: 'British Virgin Islands' },
+  { code: 'BN', name: 'Brunei' },
+  { code: 'BG', name: 'Bulgaria' },
+  { code: 'BF', name: 'Burkina Faso' },
+  { code: 'BI', name: 'Burundi' },
+  { code: 'KH', name: 'Cambodia' },
+  { code: 'CM', name: 'Cameroon' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'CV', name: 'Cape Verde' },
+  { code: 'KY', name: 'Cayman Islands' },
+  { code: 'CF', name: 'Central African Republic' },
+  { code: 'TD', name: 'Chad' },
+  { code: 'CL', name: 'Chile' },
+  { code: 'CN', name: 'China' },
+  { code: 'CO', name: 'Colombia' },
+  { code: 'KM', name: 'Comoros' },
+  { code: 'CG', name: 'Congo' },
+  { code: 'CK', name: 'Cook Islands' },
+  { code: 'CR', name: 'Costa Rica' },
+  { code: 'HR', name: 'Croatia' },
+  { code: 'CU', name: 'Cuba' },
+  { code: 'CW', name: 'Curacao' },
+  { code: 'CY', name: 'Cyprus' },
+  { code: 'CZ', name: 'Czechia' },
+  { code: 'DK', name: 'Denmark' },
+  { code: 'DJ', name: 'Djibouti' },
+  { code: 'DM', name: 'Dominica' },
+  { code: 'DO', name: 'Dominican Republic' },
+  { code: 'TL', name: 'East Timor' },
+  { code: 'EC', name: 'Ecuador' },
+  { code: 'EG', name: 'Egypt' },
+  { code: 'SV', name: 'El Salvador' },
+  { code: 'GQ', name: 'Equatorial Guinea' },
+  { code: 'ER', name: 'Eritrea' },
+  { code: 'EE', name: 'Estonia' },
+  { code: 'ET', name: 'Ethiopia' },
+  { code: 'FK', name: 'Falkland Islands' },
+  { code: 'FJ', name: 'Fiji Islands' },
+  { code: 'FI', name: 'Finland' },
+  { code: 'FR', name: 'France' },
+  { code: 'GP', name: 'France Guadeloupe / French Guiana' },
+  { code: 'GA', name: 'Gabon' },
+  { code: 'GM', name: 'Gambia' },
+  { code: 'GE', name: 'Georgia' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'GH', name: 'Ghana' },
+  { code: 'GR', name: 'Greece' },
+  { code: 'GD', name: 'Grenada' },
+  { code: 'GT', name: 'Guatemala' },
+  { code: 'GN', name: 'Guinea' },
+  { code: 'GW', name: 'Guinea-Bissau' },
+  { code: 'GY', name: 'Guyana' },
+  { code: 'HT', name: 'Haiti' },
+  { code: 'HN', name: 'Honduras' },
+  { code: 'HK', name: 'Hong Kong' },
+  { code: 'HU', name: 'Hungary' },
+  { code: 'IS', name: 'Iceland' },
+  { code: 'IN', name: 'India' },
+  { code: 'ID', name: 'Indonesia' },
+  { code: 'IR', name: 'Iran' },
+  { code: 'IQ', name: 'Iraq' },
+  { code: 'IE', name: 'Ireland' },
+  { code: 'IL', name: 'Israel' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'CI', name: 'Ivory Coast' },
+  { code: 'JM', name: 'Jamaica' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'JO', name: 'Jordan' },
+  { code: 'KZ', name: 'Kazakhstan' },
+  { code: 'KE', name: 'Kenya' },
+  { code: 'KI', name: 'Kiribati' },
+  { code: 'XK', name: 'Kosovo' },
+  { code: 'KW', name: 'Kuwait' },
+  { code: 'KG', name: 'Kyrgyzstan' },
+  { code: 'LA', name: 'Laos' },
+  { code: 'LV', name: 'Latvia' },
+  { code: 'LB', name: 'Lebanon' },
+  { code: 'LS', name: 'Lesotho' },
+  { code: 'LR', name: 'Liberia' },
+  { code: 'LY', name: 'Libya' },
+  { code: 'LI', name: 'Liechtenstein' },
+  { code: 'LT', name: 'Lithuania' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'MO', name: 'Macau S.A.R' },
+  { code: 'MK', name: 'Macedonia' },
+  { code: 'MG', name: 'Madagascar' },
+  { code: 'MW', name: 'Malawi' },
+  { code: 'MY', name: 'Malaysia' },
+  { code: 'ML', name: 'Mali' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'MH', name: 'Marshall Islands' },
+  { code: 'MU', name: 'Mauritius' },
+  { code: 'YT', name: 'Mayotte' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'FM', name: 'Micronesia' },
+  { code: 'MD', name: 'Moldova' },
+  { code: 'MN', name: 'Mongolia' },
+  { code: 'ME', name: 'Montenegro' },
+  { code: 'MS', name: 'Montserrat' },
+  { code: 'MA', name: 'Morocco' },
+  { code: 'MZ', name: 'Mozambique' },
+  { code: 'MM', name: 'Myanmar' },
+  { code: 'NA', name: 'Namibia' },
+  { code: 'NP', name: 'Nepal' },
+  { code: 'NC', name: 'New Caledonia' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'NI', name: 'Nicaragua' },
+  { code: 'NE', name: 'Niger' },
+  { code: 'NG', name: 'Nigeria' },
+  { code: 'NO', name: 'Norway' },
+  { code: 'OM', name: 'Oman' },
+  { code: 'PK', name: 'Pakistan' },
+  { code: 'PW', name: 'Palau' },
+  { code: 'PS', name: 'Palestine' },
+  { code: 'PA', name: 'Panama' },
+  { code: 'PG', name: 'Papua New Guinea' },
+  { code: 'PY', name: 'Paraguay' },
+  { code: 'PE', name: 'Peru' },
+  { code: 'PH', name: 'Philippines' },
+  { code: 'PL', name: 'Poland' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'PR', name: 'Puerto Rico' },
+  { code: 'QA', name: 'Qatar' },
+  { code: 'RE', name: 'Reunion' },
+  { code: 'RO', name: 'Romania' },
+  { code: 'RU', name: 'Russia' },
+  { code: 'RW', name: 'Rwanda' },
+  { code: 'BL', name: 'Saint Barthelemy' },
+  { code: 'SH', name: 'Saint Helena' },
+  { code: 'KN', name: 'Saint Kitts & Nevis' },
+  { code: 'LC', name: 'Saint Lucia' },
+  { code: 'MF', name: 'Saint Martin' },
+  { code: 'PM', name: 'Saint Pierre & Miquelon' },
+  { code: 'VC', name: 'Saint Vincent & the Grenadines' },
+  { code: 'WS', name: 'Samoa' },
+  { code: 'ST', name: 'Sao Tome and Principe' },
+  { code: 'SA', name: 'Saudi Arabia' },
+  { code: 'SN', name: 'Senegal' },
+  { code: 'RS', name: 'Serbia' },
+  { code: 'SC', name: 'Seychelles' },
+  { code: 'SL', name: 'Sierra Leone' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'SX', name: 'Sint Maarten' },
+  { code: 'SK', name: 'Slovakia' },
+  { code: 'SI', name: 'Slovenia' },
+  { code: 'SB', name: 'Solomon Islands' },
+  { code: 'SO', name: 'Somalia' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'KR', name: 'South Korea' },
+  { code: 'SS', name: 'South Sudan' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'LK', name: 'Sri Lanka' },
+  { code: 'SD', name: 'Sudan' },
+  { code: 'SR', name: 'Suriname' },
+  { code: 'SZ', name: 'Swaziland' },
+  { code: 'SE', name: 'Sweden' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'SY', name: 'Syria' },
+  { code: 'TW', name: 'Taiwan' },
+  { code: 'TJ', name: 'Tajikistan' },
+  { code: 'TZ', name: 'Tanzania' },
+  { code: 'TH', name: 'Thailand' },
+  { code: 'TG', name: 'Togo' },
+  { code: 'TO', name: 'Tonga' },
+  { code: 'TT', name: 'Trinidad & Tobago' },
+  { code: 'TN', name: 'Tunisia' },
+  { code: 'TR', name: 'Turkey' },
+  { code: 'TM', name: 'Turkmenistan' },
+  { code: 'TC', name: 'Turks and Caicos Islands' },
+  { code: 'UG', name: 'Uganda' },
+  { code: 'UA', name: 'Ukraine' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'US', name: 'United States of America' },
+  { code: 'UY', name: 'Uruguay' },
+  { code: 'VI', name: 'US Virgin Islands' },
+  { code: 'UZ', name: 'Uzbekistan' },
+  { code: 'VU', name: 'Vanuatu' },
+  { code: 'VE', name: 'Venezuela' },
+  { code: 'VN', name: 'Vietnam' },
+  { code: 'EH', name: 'Western Sahara' },
+  { code: 'YE', name: 'Yemen' },
+  { code: 'ZM', name: 'Zambia' },
+  { code: 'ZW', name: 'Zimbabwe' },
 ];
 
 const US_STATES = [
@@ -149,6 +362,7 @@ export default function App() {
   });
   const [ubos, setUbos] = useState([{ firstName: '', lastName: '' }]);
   const [directors, setDirectors] = useState([{ firstName: '', lastName: '' }]);
+  const [countrySearch, setCountrySearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -159,7 +373,7 @@ export default function App() {
   };
 
   const handleCountrySelect = (c) => {
-    setCountry(c);
+    setCountry({ ...c, isEU: EU_CODES.has(c.code) });
     setStep(2);
   };
 
@@ -220,6 +434,7 @@ export default function App() {
   const handleRestart = () => {
     setStep(1);
     setCountry(null);
+    setCountrySearch('');
     setForm({ businessName: '', taxId: '', street: '', houseNo: '', addressLine2: '', city: '', state: '', postalCode: '' });
     setUbos([{ firstName: '', lastName: '' }]);
     setDirectors([{ firstName: '', lastName: '' }]);
@@ -248,16 +463,42 @@ export default function App() {
             <div className="step-card">
               <h2 className="step-title">Select your country</h2>
               <p className="step-subtitle">Choose the country where your business is registered.</p>
-              <div className="country-grid">
-                {COUNTRIES.map(c => (
-                  <button key={c.code} type="button"
-                    className={`country-card ${country?.code === c.code ? 'selected' : ''}`}
-                    onClick={() => handleCountrySelect(c)}>
-                    <span className="country-flag">{c.flag}</span>
-                    <span className="country-name">{c.name}</span>
-                  </button>
-                ))}
+              <div className="country-search-wrapper">
+                <svg className="country-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  type="text"
+                  className="country-search"
+                  placeholder="Search countries…"
+                  value={countrySearch}
+                  onChange={e => setCountrySearch(e.target.value)}
+                  autoFocus
+                />
+                {countrySearch && (
+                  <button className="country-search-clear" onClick={() => setCountrySearch('')} type="button" aria-label="Clear">×</button>
+                )}
               </div>
+              {(() => {
+                const q = countrySearch.toLowerCase();
+                const filtered = COUNTRIES.filter(c =>
+                  c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+                );
+                return filtered.length > 0 ? (
+                  <div className="country-grid">
+                    {filtered.map(c => (
+                      <button key={c.code} type="button"
+                        className={`country-card ${country?.code === c.code ? 'selected' : ''}`}
+                        onClick={() => handleCountrySelect(c)}>
+                        <span className="country-flag">{flag(c.code)}</span>
+                        <span className="country-name">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="country-no-results">No countries found for "{countrySearch}"</p>
+                );
+              })()}
             </div>
           )}
 

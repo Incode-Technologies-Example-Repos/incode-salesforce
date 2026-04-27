@@ -263,6 +263,67 @@
   color: #ef4444;
 }
 
+/* ── Country search ──────────────────────────── */
+.country-search-wrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.country-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.country-search {
+  width: 100%;
+  padding: 10px 36px 10px 38px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  color: var(--input-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.country-search::placeholder {
+  color: var(--input-placeholder);
+}
+
+.country-search:focus {
+  border-color: #006aff;
+  box-shadow: 0 0 0 3px rgba(0, 106, 255, 0.12);
+}
+
+.country-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.country-search-clear:hover {
+  color: var(--text-primary);
+}
+
+.country-no-results {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
 /* ── Country selector ────────────────────────── */
 .country-grid {
   display: grid;
