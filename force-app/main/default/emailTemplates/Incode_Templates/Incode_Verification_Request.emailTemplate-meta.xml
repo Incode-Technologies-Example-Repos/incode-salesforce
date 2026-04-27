@@ -5,15 +5,31 @@
     <encodingKey>UTF-8</encodingKey>
     <name>Incode Verification Request</name>
     <style>none</style>
-    <subject>Action required: Please complete your identity verification</subject>
+    <subject>Action Required: Complete Your Business Verification</subject>
     <textOnly>Hi {!Contact.FirstName},
 
-We need to verify your identity as part of our onboarding process.
+ACTION REQUIRED: Complete Your Business Verification
+----------------------------------------------------
 
-Please visit the following link to complete your verification:
+To complete your onboarding, we need to verify your business through our eKYB
+(electronic Know Your Business) process. This is a standard requirement under
+financial regulations and Anti-Money Laundering (AML) compliance policies.
+
+WHAT TO EXPECT:
+  - Confirm your business name, tax ID, and registered address
+  - Provide beneficial ownership (UBO) information if applicable
+  - Takes approximately 5 minutes to complete
+  - All data is encrypted and processed securely
+
+To complete your business verification, please visit:
 {!Incode_Verification__c.Verification_URL__c}
 
-This link is unique to you — please do not share it with others.</textOnly>
+----------------------------------------------------
+SECURITY NOTICE: This link is personal to you and expires after a single use.
+Do not share it with anyone. If you were not expecting this message,
+please disregard it or contact our support team immediately.
+
+Powered by Incode Technologies — incode.com</textOnly>
     <type>custom</type>
     <uiType>SFX</uiType>
 </EmailTemplate>

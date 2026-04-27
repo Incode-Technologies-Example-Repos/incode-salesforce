@@ -98,7 +98,7 @@ public with sharing class IncodeEmailService {
     private static void sendFallbackEmail(String toAddress, String firstName, String verificationUrl) {
         Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
         mail.setToAddresses(new List<String>{ toAddress });
-        mail.setSubject('Action required: Please complete your business verification');
+        mail.setSubject('Action Required: Complete Your Business Verification');
         mail.setHtmlBody(buildHtmlBody(firstName, verificationUrl));
         mail.setPlainTextBody(buildPlainTextFallback(firstName, verificationUrl));
         mail.setSaveAsActivity(false);
@@ -117,29 +117,112 @@ public with sharing class IncodeEmailService {
 
     private static String buildHtmlBody(String firstName, String verificationUrl) {
         String greeting = String.isNotBlank(firstName) ? 'Hi ' + firstName + ',' : 'Hi,';
-        return '<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">'
-            + '<p>' + greeting + '</p>'
-            + '<p>We need to verify your business as part of our onboarding process. '
-            + 'Please click the button below to complete your business verification — it only takes a few minutes.</p>'
-            + '<p style="text-align:center;margin:32px 0">'
-            + '<a href="' + verificationUrl + '" '
-            + 'style="background-color:#0070d2;color:#fff;padding:14px 28px;text-decoration:none;'
-            + 'border-radius:4px;font-size:16px;font-weight:bold">Verify My Business</a>'
+        return '<!DOCTYPE html>'
+            + '<html lang="en"><head>'
+            + '<meta charset="UTF-8"/>'
+            + '<meta name="viewport" content="width=device-width,initial-scale=1.0"/>'
+            + '<title>Business Verification Required</title>'
+            + '</head>'
+            + '<body style="margin:0;padding:0;background-color:#f0f2f5;font-family:Arial,Helvetica,sans-serif;color:#333333;">'
+
+            // ── Outer wrapper
+            + '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f2f5;">'
+            + '<tr><td align="center" style="padding:40px 16px;">'
+
+            // ── 600px card
+            + '<table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">'
+
+            // ── Header
+            + '<tr><td style="background-color:#1e2130;border-radius:8px 8px 0 0;padding:28px 40px;">'
+            + '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+            + '<td>'
+            + '<p style="margin:0;font-size:26px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">incode</p>'
+            + '<p style="margin:5px 0 0;font-size:10px;font-weight:700;color:#6b7fa3;text-transform:uppercase;letter-spacing:2px;">Trusted Business Verification</p>'
+            + '</td>'
+            + '<td align="right" valign="middle">'
+            + '<span style="display:inline-block;background-color:#006aff;color:#ffffff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;border-radius:20px;">Action Required</span>'
+            + '</td>'
+            + '</tr></table>'
+            + '</td></tr>'
+
+            // ── White body
+            + '<tr><td style="background-color:#ffffff;padding:40px 40px 36px;">'
+
+            + '<p style="margin:0 0 20px;font-size:16px;font-weight:600;line-height:1.5;color:#1e2130;">' + greeting + '</p>'
+
+            + '<p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#444444;">'
+            + 'To complete your onboarding, we need to verify your business through our <strong>eKYB (electronic Know Your Business)</strong> process. '
+            + 'This is a standard step required by financial regulations and Anti-Money Laundering (AML) compliance policies before we can fully activate your account.'
             + '</p>'
-            + '<p style="font-size:13px;color:#666">If the button above does not work, copy and paste this link into your browser:</p>'
-            + '<p style="font-size:13px;word-break:break-all;color:#0070d2">' + verificationUrl + '</p>'
-            + '<hr style="border:none;border-top:1px solid #eee;margin:32px 0"/>'
-            + '<p style="font-size:12px;color:#999">This link is unique to you. Please do not share it with others.</p>'
+
+            // ── "What to expect" info box
+            + '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">'
+            + '<tr><td style="background-color:#f4f7ff;border-left:4px solid #006aff;border-radius:0 6px 6px 0;padding:18px 22px;">'
+            + '<p style="margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#006aff;">What to expect</p>'
+            + '<table cellpadding="0" cellspacing="0" border="0">'
+            + '<tr><td style="padding:4px 0;font-size:14px;color:#3a3a3a;line-height:1.5;">&#10003;&nbsp;&nbsp;Confirm your business name, tax ID, and registered address</td></tr>'
+            + '<tr><td style="padding:4px 0;font-size:14px;color:#3a3a3a;line-height:1.5;">&#10003;&nbsp;&nbsp;Provide beneficial ownership (UBO) information if applicable</td></tr>'
+            + '<tr><td style="padding:4px 0;font-size:14px;color:#3a3a3a;line-height:1.5;">&#10003;&nbsp;&nbsp;Takes approximately <strong>5 minutes</strong> to complete</td></tr>'
+            + '<tr><td style="padding:4px 0;font-size:14px;color:#3a3a3a;line-height:1.5;">&#10003;&nbsp;&nbsp;All data is encrypted and processed securely by Incode</td></tr>'
+            + '</table>'
+            + '</td></tr></table>'
+
+            // ── CTA button
+            + '<table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 32px;">'
+            + '<tr><td align="center" style="background-color:#006aff;border-radius:6px;padding:16px 40px;">'
+            + '<a href="' + verificationUrl + '" style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;letter-spacing:0.3px;display:block;">'
+            + 'Verify My Business &#8594;'
+            + '</a>'
+            + '</td></tr></table>'
+
+            // ── Fallback URL
+            + '<p style="margin:0 0 6px;font-size:13px;color:#999999;">If the button above does not work, copy and paste this link into your browser:</p>'
+            + '<p style="margin:0 0 32px;font-size:12px;word-break:break-all;color:#006aff;">' + verificationUrl + '</p>'
+
+            + '<hr style="border:none;border-top:1px solid #eeeeee;margin:0 0 20px;"/>'
+
+            // ── Security notice
+            + '<p style="margin:0;font-size:12px;color:#aaaaaa;line-height:1.75;">'
+            + '<strong style="color:#888888;">Security notice:</strong> '
+            + 'This link is personal to you and expires after a single use. Do not forward or share it with anyone. '
+            + 'If you were not expecting this message, please disregard it or contact our support team immediately.'
+            + '</p>'
+            + '</td></tr>'
+
+            // ── Footer
+            + '<tr><td style="background-color:#1e2130;border-radius:0 0 8px 8px;padding:20px 40px;">'
+            + '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+            + '<td><p style="margin:0;font-size:12px;color:#6b7fa3;">Powered by <strong style="color:#ffffff;">Incode Technologies</strong></p></td>'
+            + '<td align="right"><p style="margin:0;font-size:11px;color:#6b7fa3;">&copy; 2026 Incode Technologies, Inc.</p></td>'
+            + '</tr></table>'
+            + '</td></tr>'
+
+            + '</table>'  // ── end 600px card
+            + '</td></tr>'
+            + '</table>'  // ── end outer wrapper
             + '</body></html>';
     }
 
     private static String buildPlainTextFallback(String firstName, String verificationUrl) {
         String greeting = String.isNotBlank(firstName) ? 'Hi ' + firstName + ',' : 'Hi,';
         return greeting + '\n\n'
-            + 'We need to verify your business as part of our onboarding process.\n\n'
-            + 'Please visit the following link to complete your business verification:\n'
+            + 'ACTION REQUIRED: Complete Your Business Verification\n'
+            + '----------------------------------------------------\n\n'
+            + 'To complete your onboarding, we need to verify your business through our eKYB '
+            + '(electronic Know Your Business) process. This is a standard requirement under '
+            + 'financial regulations and Anti-Money Laundering (AML) compliance policies.\n\n'
+            + 'WHAT TO EXPECT:\n'
+            + '  - Confirm your business name, tax ID, and registered address\n'
+            + '  - Provide beneficial ownership (UBO) information if applicable\n'
+            + '  - Takes approximately 5 minutes to complete\n'
+            + '  - All data is encrypted and processed securely\n\n'
+            + 'To complete your business verification, please visit:\n'
             + verificationUrl + '\n\n'
-            + 'This link is unique to you. Please do not share it with others.';
+            + '----------------------------------------------------\n'
+            + 'SECURITY NOTICE: This link is personal to you and expires after a single use.\n'
+            + 'Do not share it with anyone. If you were not expecting this message,\n'
+            + 'please disregard it or contact our support team immediately.\n\n'
+            + 'Powered by Incode Technologies — incode.com';
     }
 
     public class IncodeEmailException extends Exception {}
