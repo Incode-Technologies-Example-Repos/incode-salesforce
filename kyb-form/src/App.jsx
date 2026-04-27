@@ -39,11 +39,7 @@ function IncodeLogo({ className }) {
 
 const flag = code => [...code.toUpperCase()].map(c => String.fromCodePoint(0x1F1E0 + c.charCodeAt(0) - 65)).join('');
 
-const EU_CODES = new Set([
-  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR',
-  'DE','GR','HU','IE','IT','LV','LT','LU','MT','PL',
-  'PT','RO','SK','SI','ES','SE','GB',
-]);
+const EU_CODES = new Set(['GB','FR','DE','IT','ES']);
 
 const COUNTRIES = [
   { code: 'AF', name: 'Afghanistan' },
