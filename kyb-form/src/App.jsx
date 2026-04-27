@@ -37,7 +37,15 @@ function IncodeLogo({ className }) {
   );
 }
 
-const FlagIcon = ({ code }) => <span className={`fi fi-${code.toLowerCase()}`} style={{ width: 32, height: 24, borderRadius: 3, display: 'inline-block', flexShrink: 0 }} />;
+const FlagIcon = ({ code, name }) => (
+  <img
+    src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
+    srcSet={`https://flagcdn.com/w80/${code.toLowerCase()}.png 2x`}
+    width="40" height="30"
+    alt={name}
+    style={{ borderRadius: 3, display: 'block', objectFit: 'cover' }}
+  />
+);
 
 const EU_CODES = new Set(['GB','FR','DE','IT','ES']);
 
@@ -486,7 +494,7 @@ export default function App() {
                       <button key={c.code} type="button"
                         className={`country-card ${country?.code === c.code ? 'selected' : ''}`}
                         onClick={() => handleCountrySelect(c)}>
-                        <FlagIcon code={c.code} />
+                        <FlagIcon code={c.code} name={c.name} />
                         <span className="country-name">{c.name}</span>
                       </button>
                     ))}
