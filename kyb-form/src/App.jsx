@@ -1,10 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import { startSession, submitEkyb, finishSession } from './services/incodeApi';
 
 function getUrlParams() {
   const p = new URLSearchParams(window.location.search);
   return { token: p.get('token'), interviewId: p.get('interviewId') };
+}
+
+function useTheme() {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('kyb-theme');
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('kyb-theme', theme);
+  }, [theme]);
+
+  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+  return { theme, toggle };
+}
+
+function IncodeLogo({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 981 249" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-label="Incode">
+      <path fillRule="evenodd" clipRule="evenodd" d="M350.8 62.9273C350.8 62.9103 350.814 62.8965 350.831 62.8965C369.563 62.9002 387.371 66.3374 404.256 73.2691C405.111 73.6021 405.674 74.4265 405.674 75.3451V107.367C405.674 108.99 404.03 110.096 402.529 109.481C385.512 102.3 369.975 98.7399 355.916 98.7399C338.468 98.7399 325.644 103.036 317.258 111.567C308.874 120.037 304.62 133.785 304.62 152.75C304.62 172.698 308.811 189.066 317.013 197.965C325.152 206.865 338.468 211.345 357.028 211.345C372.194 211.345 387.423 207.663 402.838 200.359C404.325 199.647 406.044 200.733 406.044 202.383V234.405C406.044 235.312 405.513 236.136 404.687 236.509C388.04 243.935 370.222 247.619 351.17 247.619C327.679 247.619 307.887 241.174 291.794 228.285L289.391 226.321L287.603 224.664C272.188 210.24 264.542 185.832 264.542 155.512C264.542 123.106 272.68 99.5377 289.021 84.8078C305.289 70.2062 325.874 62.964 350.769 62.958C350.786 62.958 350.8 62.9443 350.8 62.9273Z"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M43.5887 67.9668C44.9413 67.9668 46.0379 69.0649 46.0379 70.4194V240.005C46.0379 241.359 44.9413 242.457 43.5887 242.457H5.53611C4.18346 242.457 3.08691 241.359 3.08691 240.005V70.4194C3.08691 69.0649 4.18346 67.9668 5.53611 67.9668H43.5887Z"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M162.518 63.1948C162.518 63.1778 162.532 63.1641 162.549 63.1641C186.949 63.1684 205.066 68.3241 216.96 78.6921C228.86 89.1874 234.779 105.329 234.779 127.056V239.989C234.779 241.344 233.683 242.442 232.33 242.442H196.843C195.491 242.442 194.394 241.344 194.394 239.989V131.843C194.394 109.319 181.94 98.3323 156.044 98.3323C145.254 98.3323 134.834 99.8669 124.784 102.936L122.763 103.606C121.761 103.939 121.085 104.877 121.085 105.934V240.051C121.085 241.405 119.988 242.503 118.635 242.503H83.1489C81.7962 242.503 80.6997 241.405 80.6997 240.051V83.1398C80.6997 82.2951 81.1774 81.5231 81.9329 81.1472C92.3527 75.8689 104.992 71.5113 119.852 68.1968L124.784 67.1535C137.844 64.5167 150.412 63.2278 162.487 63.2256C162.504 63.2256 162.518 63.2118 162.518 63.1948Z"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M579.528 86.5725C565.161 70.7376 543.829 62.8203 515.712 62.8203C459.789 62.8203 431.489 93.7536 431.489 154.699C431.489 183.485 437.964 205.825 450.972 221.66L452.699 223.686C466.943 239.643 488.09 247.623 516.02 247.623C543.951 247.623 563.99 239.582 578.786 223.379C593.523 207.237 600.861 184.344 600.861 154.761C600.861 125.178 593.77 102.407 579.464 86.6338L579.528 86.5725ZM515.712 212.761C500.238 212.761 489.138 207.912 482.234 198.215C475.143 188.333 471.567 173.849 471.567 154.699C471.567 135.55 475.018 121.188 481.925 111.553C488.646 102.101 499.804 97.3133 515.776 97.3133C531.744 97.3133 542.78 101.978 549.81 111.245C556.961 120.697 560.598 135.182 560.598 154.699C560.598 193.796 545.739 212.761 515.712 212.761Z"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M753.121 1.23438C751.768 1.23438 750.672 2.33245 750.672 3.687V67.3326C750.672 69.1018 748.855 70.2946 747.205 69.6635C742.424 67.8353 737.271 66.3865 731.681 65.2539C723.481 63.6582 716.204 62.8603 709.917 62.8603C682.91 62.8603 662.378 70.8392 648.445 86.7967C634.634 102.693 627.727 124.666 627.727 152.653C627.727 187.575 635.805 212.187 652.021 226.426C668.176 240.543 688.707 247.601 713.616 247.601C725.886 247.601 737.784 246.127 749.376 243.12C761.091 240.113 770.834 235.326 778.603 228.881C786.616 222.191 790.687 213.906 790.687 204.147V3.687C790.687 2.33245 789.59 1.23438 788.238 1.23438H753.121ZM750.64 200.679C750.652 200.668 750.672 200.676 750.672 200.693V201.357C750.672 201.376 750.67 201.394 750.667 201.412C750.157 204.04 747.259 206.364 741.424 208.443C734.517 210.837 725.947 212.064 715.712 212.064C698.139 212.064 686.177 206.97 679.334 196.843C672.305 186.471 668.79 171.986 668.79 153.328C668.79 116.134 684.019 97.9672 715.034 97.9672C721.198 97.9672 727.549 98.8264 734.086 100.484C739.08 101.772 743.765 103.429 748.081 105.578L749.312 106.235C750.11 106.662 750.608 107.494 750.608 108.399V200.666C750.608 200.682 750.628 200.691 750.64 200.679Z"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M43.5887 1.25586C44.9413 1.25586 46.0379 2.35394 46.0379 3.70849V35.6899C46.0379 37.0445 44.9413 38.1425 43.5887 38.1425H5.53611C4.18346 38.1425 3.08691 37.0445 3.08691 35.6899V3.70848C3.08691 2.35394 4.18346 1.25586 5.53611 1.25586H43.5887Z"/>
+      <path d="M899.725 62.7188C927.017 62.7189 947.158 71.5368 960.035 89.2949C972.17 106.074 978.392 129.162 978.701 158.494V162.291C978.701 163.643 977.605 164.738 976.254 164.738H861.509C860.068 164.739 858.937 165.98 859.112 167.41C860.804 181.213 865.334 191.728 872.805 199.155C881.123 207.422 893.011 211.587 908.596 211.587C918.886 211.587 928.679 210.299 937.982 207.727C947.345 205.216 955.599 201.91 962.747 197.929L966.133 196.032L968.544 194.318C970.165 193.168 972.409 194.326 972.409 196.314V230.1C972.409 231.042 971.867 231.901 971.018 232.308L966.145 234.64C966.138 234.644 966.134 234.65 966.133 234.657C966.133 234.665 966.128 234.673 966.121 234.676L964.778 235.283C946.729 243.122 926.092 247.041 902.806 247.041C876.502 247.041 855.68 239.019 840.587 223.036C825.496 207.053 817.978 185.131 817.978 155.371C817.978 125.61 825.063 102.706 839.356 86.7235C853.647 70.741 873.853 62.7188 899.725 62.7188ZM898.676 96.4593C887.097 96.4594 878.228 99.4002 871.883 105.339C866.276 110.545 862.333 119.118 860.113 131.12L859.69 133.705C859.685 133.735 859.696 133.765 859.716 133.787C859.734 133.804 859.759 133.815 859.783 133.815H934.759C936.191 133.815 937.283 132.534 937.057 131.12C935.149 119.73 931.511 111.341 926.091 105.829C919.929 99.5837 910.875 96.4593 898.676 96.4593Z"/>
+    </svg>
+  );
 }
 
 const COUNTRIES = [
@@ -32,38 +62,26 @@ const US_STATES = [
   ['WI','Wisconsin'],['WY','Wyoming'],
 ];
 
-const KEY_LABELS = {
-  name:                   'Business Name',
-  tin:                    'Tax ID / TIN',
-  address_verification:   'Address',
-  address_deliverability: 'Address Deliverability',
-  address_property_type:  'Property Type',
-  cityMatch:              'City Match',
-  postalCodeMatch:        'Postal Code Match',
-  registrationStatus:     'Registration Status',
-  ubo_name_match:         'UBO Name Match',
-  directors_name_match:   'Director Name Match',
-  entityType:             'Entity Type',
-  people:                 'Associated People',
-};
+const STEPS = ['Country', 'Business', 'People', 'Done'];
 
-function getCheckClass(subLabel) {
-  if (!subLabel) return 'info';
-  const s = subLabel.toLowerCase();
-  if (s === 'verified' || s === 'active' || s === 'deliverable' || s === 'commercial') return 'verified';
-  if (s.includes('approximate') || s.includes('partial')) return 'approximate';
-  if (s === 'unverified' || s === 'inactive' || s === 'failed') return 'unverified';
-  return 'info';
+function SunIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
 }
 
-function getCheckIcon(cls) {
-  if (cls === 'verified')    return '✓';
-  if (cls === 'approximate') return '~';
-  if (cls === 'unverified')  return '✗';
-  return 'i';
+function MoonIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
 }
-
-const STEPS = ['Country', 'Business', 'People', 'Results'];
 
 function ProgressBar({ step }) {
   return (
@@ -74,12 +92,13 @@ function ProgressBar({ step }) {
           const isCompleted = step > idx;
           const isActive = step === idx;
           return (
-            <div
-              key={label}
-              className={`progress-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-            >
+            <div key={label} className={`progress-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
               <div className="step-circle">
-                {isCompleted ? '✓' : idx}
+                {isCompleted ? (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : idx}
               </div>
               <span className="step-label">{label}</span>
             </div>
@@ -92,8 +111,7 @@ function ProgressBar({ step }) {
 
 function PersonList({ label, people, onChange }) {
   const updatePerson = (i, field, value) => {
-    const updated = people.map((p, idx) => idx === i ? { ...p, [field]: value } : p);
-    onChange(updated);
+    onChange(people.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
   };
   const addPerson = () => onChange([...people, { firstName: '', lastName: '' }]);
   const removePerson = (i) => onChange(people.filter((_, idx) => idx !== i));
@@ -103,27 +121,12 @@ function PersonList({ label, people, onChange }) {
       <div className="people-list">
         {people.map((p, i) => (
           <div className="person-row" key={i}>
-            <input
-              type="text"
-              placeholder="First name"
-              value={p.firstName}
-              onChange={e => updatePerson(i, 'firstName', e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Last name"
-              value={p.lastName}
-              onChange={e => updatePerson(i, 'lastName', e.target.value)}
-            />
-            <button
-              type="button"
-              className="btn-remove"
-              onClick={() => removePerson(i)}
-              disabled={people.length === 1}
-              title="Remove"
-            >
-              ×
-            </button>
+            <input type="text" placeholder="First name" value={p.firstName}
+              onChange={e => updatePerson(i, 'firstName', e.target.value)} />
+            <input type="text" placeholder="Last name" value={p.lastName}
+              onChange={e => updatePerson(i, 'lastName', e.target.value)} />
+            <button type="button" className="btn-remove" onClick={() => removePerson(i)}
+              disabled={people.length === 1} title="Remove">×</button>
           </div>
         ))}
       </div>
@@ -134,80 +137,9 @@ function PersonList({ label, people, onChange }) {
   );
 }
 
-function CheckItem({ item }) {
-  if (item.key === 'entityType') {
-    return (
-      <div className="check-item">
-        <div className="check-icon info">{getCheckIcon('info')}</div>
-        <div className="check-content">
-          <div className="check-label">{KEY_LABELS.entityType}</div>
-          <div className="check-value">{item.entityType?.entityType || '—'}</div>
-        </div>
-        <span className="check-badge info">Info</span>
-      </div>
-    );
-  }
-
-  if (item.key === 'people') {
-    return (
-      <div className="check-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div className="check-icon info">{getCheckIcon('info')}</div>
-          <div className="check-label" style={{ paddingTop: 2 }}>{KEY_LABELS.people}</div>
-        </div>
-        {item.people && item.people.length > 0 && (
-          <div className="people-section">
-            <table className="people-table">
-              <tbody>
-                {item.people.map((person, i) => (
-                  <tr key={i}>
-                    <td>{person.name}</td>
-                    <td>{person.titles?.map(t => t.title).join(', ') || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const cls = getCheckClass(item.sub_label);
-  const inputNote = item.uboName_input || item.directorsName_input;
-
-  return (
-    <div className="check-item">
-      <div className={`check-icon ${cls}`}>{getCheckIcon(cls)}</div>
-      <div className="check-content">
-        <div className="check-label">{KEY_LABELS[item.key] || item.key}</div>
-        {inputNote && <div className="check-value">Input: {inputNote}</div>}
-        {item.reasonCodes?.length > 0 && (
-          <div className="check-value">Codes: {item.reasonCodes.join(', ')}</div>
-        )}
-      </div>
-      {item.sub_label && (
-        <span className={`check-badge ${cls}`}>{item.sub_label}</span>
-      )}
-    </div>
-  );
-}
-
-function getFinishStatusMeta(action, scoreStatus) {
-  if (action === 'approved' || scoreStatus === 'OK') {
-    return { cls: 'status-approved', icon: '✅', title: 'Verification Passed', desc: 'The business has been successfully verified.' };
-  }
-  if (action === 'rejected' || scoreStatus === 'FAIL') {
-    return { cls: 'status-rejected', icon: '❌', title: 'Verification Failed', desc: 'The business could not be verified with the information provided.' };
-  }
-  if (action === 'manualReview') {
-    return { cls: 'status-review', icon: '🔍', title: 'Manual Review Required', desc: 'This verification requires additional review by our compliance team.' };
-  }
-  return { cls: 'status-none', icon: '📋', title: 'Verification Submitted', desc: 'The verification results are shown below.' };
-}
-
 export default function App() {
-  const { token: presetToken, interviewId: presetInterviewId } = getUrlParams();
+  const { theme, toggle } = useTheme();
+  const { token: presetToken } = getUrlParams();
 
   const [step, setStep] = useState(1);
   const [country, setCountry] = useState(null);
@@ -220,8 +152,6 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [kybResults, setKybResults] = useState(null);
-  const [finishData, setFinishData] = useState(null);
 
   const updateForm = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -276,13 +206,10 @@ export default function App() {
           .map(p => `${p.firstName} ${p.lastName}`.trim());
       }
 
-      const [kybData, finishResult] = await Promise.all([
+      await Promise.all([
         submitEkyb(token, payload),
         finishSession(token),
       ]);
-
-      setKybResults(kybData.kyb || []);
-      setFinishData(finishResult);
     } catch (err) {
       setError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
@@ -296,45 +223,36 @@ export default function App() {
     setForm({ businessName: '', taxId: '', street: '', houseNo: '', addressLine2: '', city: '', state: '', postalCode: '' });
     setUbos([{ firstName: '', lastName: '' }]);
     setDirectors([{ firstName: '', lastName: '' }]);
-    setKybResults(null);
-    setFinishData(null);
     setError(null);
     setFieldErrors({});
   };
 
-  const statusMeta = finishData
-    ? getFinishStatusMeta(finishData.action, finishData.scoreStatus)
-    : null;
-
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">
-          <div className="logo-dot" />
-          <span className="logo-text">incode</span>
+        <div className="header-left">
+          <IncodeLogo className="logo-svg" />
+          <span className="header-badge">eKYB</span>
         </div>
-        <span className="header-badge">eKYB</span>
+        <button className="theme-toggle" onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
+          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+        </button>
       </header>
 
       <main className="main">
         <div className="form-container">
           <ProgressBar step={step} />
 
-          {/* ── STEP 1: Country ──────────────────── */}
+          {/* ── STEP 1: Country ── */}
           {step === 1 && (
             <div className="step-card">
               <h2 className="step-title">Select your country</h2>
-              <p className="step-subtitle">
-                Choose the country where your business is registered.
-              </p>
+              <p className="step-subtitle">Choose the country where your business is registered.</p>
               <div className="country-grid">
                 {COUNTRIES.map(c => (
-                  <button
-                    key={c.code}
-                    type="button"
+                  <button key={c.code} type="button"
                     className={`country-card ${country?.code === c.code ? 'selected' : ''}`}
-                    onClick={() => handleCountrySelect(c)}
-                  >
+                    onClick={() => handleCountrySelect(c)}>
                     <span className="country-flag">{c.flag}</span>
                     <span className="country-name">{c.name}</span>
                   </button>
@@ -343,89 +261,55 @@ export default function App() {
             </div>
           )}
 
-          {/* ── STEP 2: Business info ─────────────── */}
+          {/* ── STEP 2: Business info ── */}
           {step === 2 && (
             <div className="step-card">
               <h2 className="step-title">Business information</h2>
               <p className="step-subtitle">
-                Enter your registered business details. Fields marked <span style={{ color: '#ef4444' }}>*</span> are required.
+                Enter your registered business details. Fields marked <span className="required-star">*</span> are required.
               </p>
-
               <div className="form-grid">
                 <div className="field full">
-                  <label>Business Name <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Acme Corporation Ltd"
-                    value={form.businessName}
-                    onChange={e => updateForm('businessName', e.target.value)}
-                    className={fieldErrors.businessName ? 'error' : ''}
-                  />
+                  <label>Business Name <span className="required-star">*</span></label>
+                  <input type="text" placeholder="e.g. Acme Corporation Ltd"
+                    value={form.businessName} onChange={e => updateForm('businessName', e.target.value)}
+                    className={fieldErrors.businessName ? 'error' : ''} />
                   {fieldErrors.businessName && <span className="field-error">{fieldErrors.businessName}</span>}
                 </div>
-
                 <div className="field full">
-                  <label>Tax ID / Registration Number <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    placeholder={country?.code === 'US' ? 'e.g. 123456789' : 'e.g. GB450020358'}
-                    value={form.taxId}
-                    onChange={e => updateForm('taxId', e.target.value)}
-                    className={fieldErrors.taxId ? 'error' : ''}
-                  />
+                  <label>Tax ID / Registration Number <span className="required-star">*</span></label>
+                  <input type="text" placeholder={country?.code === 'US' ? 'e.g. 123456789' : 'e.g. GB450020358'}
+                    value={form.taxId} onChange={e => updateForm('taxId', e.target.value)}
+                    className={fieldErrors.taxId ? 'error' : ''} />
                   {fieldErrors.taxId && <span className="field-error">{fieldErrors.taxId}</span>}
                 </div>
-
-                <div className="field" style={{ gridColumn: '1 / 2' }}>
+                <div className="field">
                   <label>Street</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Mission St"
-                    value={form.street}
-                    onChange={e => updateForm('street', e.target.value)}
-                  />
+                  <input type="text" placeholder="e.g. Mission St"
+                    value={form.street} onChange={e => updateForm('street', e.target.value)} />
                 </div>
-
                 <div className="field">
                   <label>House / Building No.</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 101"
-                    value={form.houseNo}
-                    onChange={e => updateForm('houseNo', e.target.value)}
-                  />
+                  <input type="text" placeholder="e.g. 101"
+                    value={form.houseNo} onChange={e => updateForm('houseNo', e.target.value)} />
                 </div>
-
                 <div className="field full">
                   <label>Address Line 2</label>
-                  <input
-                    type="text"
-                    placeholder="Floor, Suite, Unit (optional)"
-                    value={form.addressLine2}
-                    onChange={e => updateForm('addressLine2', e.target.value)}
-                  />
+                  <input type="text" placeholder="Floor, Suite, Unit (optional)"
+                    value={form.addressLine2} onChange={e => updateForm('addressLine2', e.target.value)} />
                 </div>
-
                 <div className="field">
-                  <label>City <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    placeholder="e.g. San Francisco"
-                    value={form.city}
-                    onChange={e => updateForm('city', e.target.value)}
-                    className={fieldErrors.city ? 'error' : ''}
-                  />
+                  <label>City <span className="required-star">*</span></label>
+                  <input type="text" placeholder="e.g. San Francisco"
+                    value={form.city} onChange={e => updateForm('city', e.target.value)}
+                    className={fieldErrors.city ? 'error' : ''} />
                   {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
                 </div>
-
                 {country?.code === 'US' ? (
                   <div className="field">
-                    <label>State <span className="required">*</span></label>
-                    <select
-                      value={form.state}
-                      onChange={e => updateForm('state', e.target.value)}
-                      className={fieldErrors.state ? 'error' : ''}
-                    >
+                    <label>State <span className="required-star">*</span></label>
+                    <select value={form.state} onChange={e => updateForm('state', e.target.value)}
+                      className={fieldErrors.state ? 'error' : ''}>
                       <option value="">Select state…</option>
                       {US_STATES.map(([code, name]) => (
                         <option key={code} value={code}>{name}</option>
@@ -436,44 +320,29 @@ export default function App() {
                 ) : (
                   <div className="field">
                     <label>Region / State</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Île-de-France"
-                      value={form.state}
-                      onChange={e => updateForm('state', e.target.value)}
-                    />
+                    <input type="text" placeholder="e.g. Île-de-France"
+                      value={form.state} onChange={e => updateForm('state', e.target.value)} />
                   </div>
                 )}
-
                 <div className="field">
-                  <label>Postal Code <span className="required">*</span></label>
-                  <input
-                    type="text"
-                    placeholder={country?.code === 'US' ? '94105' : 'W1F 0DQ'}
-                    value={form.postalCode}
-                    onChange={e => updateForm('postalCode', e.target.value)}
-                    className={fieldErrors.postalCode ? 'error' : ''}
-                  />
+                  <label>Postal Code <span className="required-star">*</span></label>
+                  <input type="text" placeholder={country?.code === 'US' ? '94105' : 'W1F 0DQ'}
+                    value={form.postalCode} onChange={e => updateForm('postalCode', e.target.value)}
+                    className={fieldErrors.postalCode ? 'error' : ''} />
                   {fieldErrors.postalCode && <span className="field-error">{fieldErrors.postalCode}</span>}
                 </div>
               </div>
-
               <div className="btn-actions">
-                <button type="button" className="btn-back" onClick={() => setStep(1)}>
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => { if (validateStep2()) setStep(3); }}
-                >
+                <button type="button" className="btn-back" onClick={() => setStep(1)}>Back</button>
+                <button type="button" className="btn-primary"
+                  onClick={() => { if (validateStep2()) setStep(3); }}>
                   Continue →
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── STEP 3: People ────────────────────── */}
+          {/* ── STEP 3: People ── */}
           {step === 3 && (
             <div className="step-card">
               <h2 className="step-title">Beneficial owners &amp; directors</h2>
@@ -481,13 +350,11 @@ export default function App() {
                 Provide the names of beneficial owners (UBOs)
                 {country?.isEU ? ' and company directors' : ''} associated with the business.
               </p>
-
               <div className="section-divider">
                 <h3>Beneficial Owners (UBOs)</h3>
                 <div className="divider-line" />
               </div>
               <PersonList label="UBO" people={ubos} onChange={setUbos} />
-
               {country?.isEU && (
                 <>
                   <div className="section-divider">
@@ -497,78 +364,58 @@ export default function App() {
                   <PersonList label="Director" people={directors} onChange={setDirectors} />
                 </>
               )}
-
               <div className="btn-actions">
-                <button type="button" className="btn-back" onClick={() => setStep(2)}>
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleSubmit}
-                >
+                <button type="button" className="btn-back" onClick={() => setStep(2)}>Back</button>
+                <button type="button" className="btn-primary" onClick={handleSubmit}>
                   Submit Verification →
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── STEP 4: Results ───────────────────── */}
+          {/* ── STEP 4: Confirmation ── */}
           {step === 4 && (
             <div className="step-card">
               {loading ? (
                 <div className="loading-screen">
                   <div className="spinner" />
                   <div>
-                    <p style={{ color: '#e2e8f0', fontWeight: 600, marginBottom: 6 }}>
-                      Verifying your business…
-                    </p>
-                    <p>This usually takes a few seconds. Please don't close this page.</p>
+                    <p className="loading-title">Submitting your verification…</p>
+                    <p className="loading-sub">This usually takes a few seconds. Please don't close this page.</p>
                   </div>
                 </div>
               ) : error ? (
-                <>
-                  <h2 className="step-title">Verification Error</h2>
-                  <div className="error-banner" style={{ marginTop: 16 }}>
-                    <span className="error-icon">⚠</span>
-                    <span>{error}</span>
+                <div className="error-screen">
+                  <div className="error-icon-circle">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
                   </div>
-                  <div className="btn-actions" style={{ justifyContent: 'center' }}>
-                    <button type="button" className="btn-back" onClick={() => setStep(3)}>
-                      Go Back
-                    </button>
-                    <button type="button" className="btn-primary" onClick={handleSubmit}>
-                      Retry →
-                    </button>
+                  <h2 className="step-title" style={{ marginTop: 20 }}>Submission Failed</h2>
+                  <p className="step-subtitle">{error}</p>
+                  <div className="btn-actions" style={{ justifyContent: 'center', marginTop: 24 }}>
+                    <button type="button" className="btn-back" onClick={() => setStep(3)}>Go Back</button>
+                    <button type="button" className="btn-primary" onClick={handleSubmit}>Try Again →</button>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <h2 className="step-title">Verification Results</h2>
-                  <p className="step-subtitle" style={{ marginBottom: 20 }}>
-                    {country?.flag} {form.businessName}
-                  </p>
-
-                  {statusMeta && (
-                    <div className={`result-status ${statusMeta.cls}`}>
-                      <span className="status-icon">{statusMeta.icon}</span>
-                      <div className="status-info">
-                        <h3>{statusMeta.title}</h3>
-                        <p>{statusMeta.desc}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="checks-list">
-                    {(kybResults || []).map((item, i) => (
-                      <CheckItem key={i} item={item} />
-                    ))}
+                <div className="success-screen">
+                  <div className="success-icon-circle">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                      <path d="M7 16.5l6 6 12-12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                   </div>
-
-                  <button type="button" className="btn-restart" onClick={handleRestart}>
-                    Start New Verification
-                  </button>
-                </>
+                  <h2 className="success-title">Verification Submitted</h2>
+                  <p className="success-body">
+                    Thank you{form.businessName ? `, ${form.businessName}` : ''}. Your business information has been
+                    successfully submitted for review.
+                  </p>
+                  <p className="success-body secondary">
+                    Our compliance team will process your request. You will be contacted if any additional
+                    information is required.
+                  </p>
+                  <p className="success-close">You may now close this window.</p>
+                </div>
               )}
             </div>
           )}
@@ -576,7 +423,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        Powered by Incode Technologies — incode.com
+        <IncodeLogo className="footer-logo" />
       </footer>
     </div>
   );
