@@ -1,2 +1,1 @@
-# Temporarily ignore email templates due to CLI EmailFolder bug
-force-app/main/default/emailTemplates/
+# standard salesforce ignores
