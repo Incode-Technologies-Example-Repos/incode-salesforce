@@ -2,7 +2,50 @@ public with sharing class IncodeEmailService {
 
     private static final String EMAIL_SUBJECT = 'Action Required: Complete Your Business Verification';
 
-    // Base64-encoded white SVG of the Incode wordmark logo (for dark header backgrounds)
+    // Inline SVG — white Incode wordmark (Gmail blocks data: URIs on img tags)
+    private static final String LOGO_SVG =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 981 249" width="140" height="36"'
+        + ' style="display:block;vertical-align:middle;" aria-label="incode"><g fill="#ffffff">'
+        + '<path fill-rule="evenodd" clip-rule="evenodd" d="M350.8 62.93c0-.02.01-.03.03-.03'
+        + ' 18.73 0 36.54 3.44 53.43 10.37.85.33 1.42 1.16 1.42 2.08v32.02c0 1.62-1.64 2.73-3.14 2.11'
+        + '-17.02-7.18-32.56-10.74-46.61-10.74-17.45 0-30.27 4.3-38.66 12.83-8.38 8.47-12.64 22.22-12.64 41.18'
+        + ' 0 19.95 4.19 36.32 12.39 45.22 8.14 8.9 21.46 13.38 40.02 13.38 15.17 0 30.4-3.68 45.81-10.99'
+        + ' 1.49-.71 3.21.37 3.21 2.02v32.02c0 .91-.53 1.73-1.36 2.1-16.65 7.43-34.47 11.11-53.52 11.11'
+        + '-23.49 0-43.28-6.44-59.38-19.33l-2.4-1.96-1.79-1.66C257.87 211.74 250.22 187.33 250.22 157.01'
+        + 'c0-32.41 8.14-55.97 24.48-70.7C290.97 71.71 311.55 64.46 336.45 64.46c.02 0 .03-.01.03-.03z"/>'
+        + '<path fill-rule="evenodd" clip-rule="evenodd" d="M43.59 67.97c1.35 0 2.45 1.1 2.45 2.45v169.59'
+        + 'c0 1.35-1.1 2.45-2.45 2.45H5.54c-1.35 0-2.45-1.1-2.45-2.45V70.42c0-1.35 1.1-2.45 2.45-2.45h38.05z"/>'
+        + '<path fill-rule="evenodd" clip-rule="evenodd" d="M162.52 63.19c0-.02.01-.03.03-.03'
+        + ' 24.4 0 42.52 5.16 54.41 15.53 11.9 10.5 17.82 26.64 17.82 48.37v112.93c0 1.35-1.1 2.45-2.45 2.45'
+        + 'h-35.49c-1.35 0-2.45-1.1-2.45-2.45V131.84c0-22.52-12.45-33.51-38.35-33.51-10.79 0-21.21 1.53-31.26 4.6'
+        + 'l-2.02.67c-1 .33-1.68 1.27-1.68 2.33v134.12c0 1.35-1.1 2.45-2.45 2.45H83.15c-1.35 0-2.45-1.1-2.45-2.45'
+        + 'V83.14c0-.84.48-1.62 1.23-2 10.42-5.28 23.06-9.64 37.92-12.95l4.93-1.04c13.06-2.64 25.63-3.93 37.7-3.93'
+        + 'c.02 0 .03-.01.03-.03z"/>'
+        + '<path fill-rule="evenodd" clip-rule="evenodd" d="M579.53 86.57c-14.37-15.83-35.7-23.75-63.82-23.75'
+        + '-55.92 0-84.22 30.93-84.22 91.88 0 28.79 6.48 51.13 19.48 66.96l1.73 2.03c14.24 15.96 35.39 23.94 63.32 23.94'
+        + 's56-8.04 70.8-24.24c14.74-16.14 22.07-39.04 22.07-68.62 0-29.58-7.09-52.35-21.4-68.09l.04-.11z'
+        + 'M515.71 212.76c-15.47 0-26.57-4.85-33.48-14.55-7.09-9.88-10.67-24.37-10.67-43.51'
+        + ' 0-19.15 3.45-33.51 10.36-43.15 6.72-9.45 17.88-14.24 33.85-14.24 15.97 0 27 4.67 34.03 13.93'
+        + ' 7.15 9.45 10.79 23.94 10.79 43.45 0 39.1-14.86 58.07-44.89 58.07z"/>'
+        + '<path fill-rule="evenodd" clip-rule="evenodd" d="M753.12 1.23c-1.35 0-2.45 1.1-2.45 2.46v63.65'
+        + 'c0 1.77-1.82 2.96-3.47 2.33-4.78-1.83-9.93-3.28-15.52-4.41-8.2-1.6-15.48-2.39-21.76-2.39'
+        + '-27.01 0-47.54 7.98-61.47 23.94-13.81 15.9-20.72 37.87-20.72 65.85 0 34.92 8.08 59.53 24.29 73.77'
+        + 'C668.18 240.54 688.71 247.6 713.62 247.6c12.27 0 24.17-1.47 35.76-4.48 11.72-3.01 21.46-7.79 29.23-14.24'
+        + ' 8.01-6.69 12.08-14.97 12.08-24.73V3.69c0-1.36-1.1-2.46-2.45-2.46h-35.12z"/>'
+        + '<path fill-rule="evenodd" clip-rule="evenodd" d="M43.59 1.26c1.35 0 2.45 1.1 2.45 2.45v31.98'
+        + 'c0 1.35-1.1 2.45-2.45 2.45H5.54c-1.35 0-2.45-1.1-2.45-2.45V3.71c0-1.35 1.1-2.45 2.45-2.45h38.05z"/>'
+        + '<path d="M899.73 62.72c27.29 0 47.43 8.82 60.31 26.58 12.13 16.78 18.36 39.86 18.66 69.19v3.8'
+        + 'c0 1.35-1.1 2.45-2.45 2.45H861.51c-1.44 0-2.57 1.24-2.4 2.67 1.69 13.8 6.22 24.32 13.69 31.75'
+        + ' 8.32 8.27 20.21 12.43 35.79 12.43 10.29 0 20.08-1.29 29.39-3.86 9.36-2.51 17.62-5.82 24.76-9.8'
+        + 'l3.39-1.9 2.41-1.71c1.62-1.15 3.86.01 3.86 2v33.79c0 .94-.54 1.8-1.39 2.21l-4.87 2.33c-.01 0-.01.01-.01.02'
+        + ' 0 .01-.01.02-.01.02l-1.34.61c-18.05 7.84-38.69 11.76-61.97 11.76-26.3 0-47.13-8.02-62.22-24'
+        + '-15.09-15.98-22.61-37.9-22.61-67.67 0-29.76 7.09-52.66 21.38-68.64 14.29-15.98 34.5-24 60.37-24z'
+        + 'M898.68 96.46c-11.58 0-20.45 2.94-26.79 8.88-5.61 5.21-9.55 13.78-11.77 25.78l-.42 2.59'
+        + 'c0 .03.01.06.03.08.02.02.04.03.07.03h74.98c1.43 0 2.52-1.28 2.3-2.69-1.91-11.39-5.55-19.78-10.97-25.29'
+        + '-6.16-6.25-15.21-9.37-27.41-9.37z"/>'
+        + '</g></svg>';
+
+    // Kept for backward compatibility — no longer used
     private static final String LOGO_B64 =
         'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5ODEg' +
         'MjQ5Ij48cGF0aCBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZl' +
@@ -133,7 +176,6 @@ public with sharing class IncodeEmailService {
 
     private static String buildHtmlBody(String firstName, String verificationUrl) {
         String greeting = String.isNotBlank(firstName) ? 'Hi ' + firstName + ',' : 'Hi,';
-        String logoSrc  = 'data:image/svg+xml;base64,' + LOGO_B64;
 
         return '<!DOCTYPE html>'
             + '<html lang="en"><head>'
@@ -155,8 +197,7 @@ public with sharing class IncodeEmailService {
             + '<tr><td bgcolor="#0f1422" style="background-color:#0f1422;padding:28px 40px 26px;">'
             + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
             + '<td valign="middle">'
-            + '<img src="' + logoSrc + '" alt="incode" width="120" height="31"'
-            + ' style="display:block;border:0;height:auto;max-width:120px;"/>'
+            + LOGO_SVG
             + '<p style="margin:10px 0 0;font-size:10px;font-weight:700;color:#5a6a8a;'
             + 'text-transform:uppercase;letter-spacing:2px;line-height:1;">Business Verification Required</p>'
             + '</td>'
