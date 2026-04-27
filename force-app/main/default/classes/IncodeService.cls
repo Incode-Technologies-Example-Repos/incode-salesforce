@@ -13,7 +13,7 @@ public with sharing class IncodeService {
     private static final String NAMED_CREDENTIAL_DEMO  = 'callout:IncodeAPI';
     private static final String NAMED_CREDENTIAL_PROD  = 'callout:IncodeAPI_Production';
     private static final String OMNI_START_PATH        = '/omni/start';
-    private static final String KYB_FORM_BASE_URL      = 'http://localhost:5174';
+    private static final String KYB_FORM_BASE_URL      = 'https://incode-technologies-example-repos.github.io/incode-salesforce';
 
     /** Returns the Named Credential prefix for the configured environment. */
     private static String namedCredential(Incode_Config__c config) {
