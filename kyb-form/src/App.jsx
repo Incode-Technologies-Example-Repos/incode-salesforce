@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { startSession, submitEkyb, finishSession } from './services/incodeApi';
 
@@ -7,22 +7,7 @@ function getUrlParams() {
   return { token: p.get('token'), interviewId: p.get('interviewId') };
 }
 
-function useTheme() {
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('kyb-theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('kyb-theme', theme);
-  }, [theme]);
-
-  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
-  return { theme, toggle };
-}
-
+// ── Logo ──────────────────────────────────────────────────────
 function IncodeLogo({ className }) {
   return (
     <svg className={className} viewBox="0 0 981 249" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-label="Incode">
@@ -37,17 +22,37 @@ function IncodeLogo({ className }) {
   );
 }
 
-const FlagIcon = ({ code, name }) => (
-  <img
-    src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
-    srcSet={`https://flagcdn.com/w80/${code.toLowerCase()}.png 2x`}
-    width="40" height="30"
-    alt={name}
-    style={{ borderRadius: 3, display: 'block', objectFit: 'cover' }}
-  />
-);
+// ── Verified badge ────────────────────────────────────────────
+function VerifiedBadge() {
+  return (
+    <div className="verified-badge">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+        <circle cx="7.5" cy="7.5" r="7.5" fill="#006aff"/>
+        <path d="M4.5 7.5l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      <span className="verified-text">verified by</span>
+      <IncodeLogo className="verified-logo" />
+    </div>
+  );
+}
 
-const EU_CODES = new Set(['GB','FR','DE','IT','ES']);
+// ── Flag image ────────────────────────────────────────────────
+function FlagImg({ code, name, size = 'md' }) {
+  const w = size === 'sm' ? 20 : 28;
+  const h = size === 'sm' ? 15 : 21;
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
+      srcSet={`https://flagcdn.com/w80/${code.toLowerCase()}.png 2x`}
+      width={w} height={h}
+      alt={name}
+      style={{ borderRadius: 2, display: 'block', objectFit: 'cover', flexShrink: 0 }}
+    />
+  );
+}
+
+// ── Countries ─────────────────────────────────────────────────
+const EU_CODES = new Set(['GB', 'FR', 'DE', 'IT', 'ES']);
 
 const COUNTRIES = [
   { code: 'AF', name: 'Afghanistan' },
@@ -279,83 +284,190 @@ const US_STATES = [
   ['WI','Wisconsin'],['WY','Wyoming'],
 ];
 
-const STEPS = ['Country', 'Business', 'People', 'Done'];
-
-function SunIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </svg>
-  );
+// ── Tax ID validation ─────────────────────────────────────────
+function getTaxIdHint(countryCode) {
+  switch (countryCode) {
+    case 'US': return 'EIN: 9 digits, e.g. 123456789';
+    case 'GB': return 'Registration No. (7–8 digits) or VAT No. (9 digits)';
+    case 'FR': return 'SIREN, SIRET, RCS, RC, or VAT number';
+    case 'ES': return 'CIF: A12345678 · NIF: 12345678A · Foreign: A1234567B';
+    case 'IT': return 'CCIAA: AA123456 · Company ID: IT12345678 · VAT: 11 digits';
+    case 'DE': return 'VAT: DE123456789 · SafeNo: DE12345678 · Reg: HRB1234';
+    default: return null;
+  }
 }
 
-function MoonIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-    </svg>
-  );
+function validateTaxId(value, countryCode) {
+  const v = value.trim().toUpperCase();
+  if (!v) return null;
+
+  switch (countryCode) {
+    case 'US': {
+      const digits = v.replace(/\D/g, '');
+      if (digits.length !== 9) return 'EIN must be exactly 9 digits';
+      return null;
+    }
+    case 'GB': {
+      const digits = v.replace(/\D/g, '');
+      if (digits.length < 7 || digits.length > 9)
+        return 'Enter a valid Registration No. (7–8 digits) or VAT No. (9 digits)';
+      return null;
+    }
+    case 'FR': {
+      if (v.length < 2) return 'Please enter a valid Tax ID';
+      return null;
+    }
+    case 'ES': {
+      const p1 = /^[A-Z]\d{8}$/;
+      const p2 = /^[A-Z]\d{7}[A-Z]$/;
+      const p3 = /^\d{8}[A-Z]$/;
+      if (!p1.test(v) && !p2.test(v) && !p3.test(v))
+        return 'Expected: A12345678 (CIF), 12345678A (NIF), or A1234567B (foreign NIF)';
+      return null;
+    }
+    case 'IT': {
+      const p1 = /^[A-Z]{2}-?\d{6,7}$/;
+      const p2 = /^IT\d{8}$/;
+      const p3 = /^\d{11}$/;
+      if (!p1.test(v) && !p2.test(v) && !p3.test(v))
+        return 'Expected: AA123456 (CCIAA), IT12345678 (company ID), or 11-digit code';
+      return null;
+    }
+    case 'DE': {
+      const vat  = /^DE\d{9}$/;
+      const safe = /^DE\d{8}$/;
+      const hrb  = /^HRB\s*\d{3,6}[A-Z]?$/;
+      const hra  = /^HRA\s*\d{4,6}$/;
+      const plain = /^\d{4,6}$/;
+      if (!vat.test(v) && !safe.test(v) && !hrb.test(v) && !hra.test(v) && !plain.test(v))
+        return 'Expected: DE123456789, HRB1234, HRA12345, or 4–6 digit registration number';
+      return null;
+    }
+    default:
+      return null;
+  }
 }
 
-function ProgressBar({ step }) {
+// ── Country dropdown ──────────────────────────────────────────
+function CountryDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef(null);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    if (open && searchRef.current) searchRef.current.focus();
+  }, [open]);
+
+  const filtered = COUNTRIES.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.code.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="progress-wrapper">
-      <div className="progress-steps">
-        {STEPS.map((label, i) => {
-          const idx = i + 1;
-          const isCompleted = step > idx;
-          const isActive = step === idx;
-          return (
-            <div key={label} className={`progress-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
-              <div className="step-circle">
-                {isCompleted ? (
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    <div className={`country-dropdown${open ? ' open' : ''}`} ref={ref}>
+      <button type="button" className="dropdown-trigger" onClick={() => setOpen(o => !o)}>
+        <div className="dropdown-value">
+          {value ? (
+            <>
+              <FlagImg code={value.code} name={value.name} size="sm" />
+              <span>{value.name}</span>
+            </>
+          ) : (
+            <span className="dropdown-placeholder">Select country…</span>
+          )}
+        </div>
+        <svg className={`dropdown-chevron${open ? ' flipped' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="dropdown-panel">
+          <div className="dropdown-search-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search countries…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="dropdown-list">
+            {filtered.length > 0 ? filtered.map(c => (
+              <button key={c.code} type="button"
+                className={`dropdown-item${value?.code === c.code ? ' selected' : ''}`}
+                onClick={() => { onChange(c); setOpen(false); setSearch(''); }}>
+                <FlagImg code={c.code} name={c.name} size="sm" />
+                <span>{c.name}</span>
+                {value?.code === c.code && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#006aff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto' }}>
+                    <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                ) : idx}
-              </div>
-              <span className="step-label">{label}</span>
-            </div>
-          );
-        })}
-      </div>
+                )}
+              </button>
+            )) : (
+              <div className="dropdown-empty">No countries found for "{search}"</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function PersonList({ label, people, onChange }) {
-  const updatePerson = (i, field, value) => {
-    onChange(people.map((p, idx) => idx === i ? { ...p, [field]: value } : p));
-  };
-  const addPerson = () => onChange([...people, { firstName: '', lastName: '' }]);
-  const removePerson = (i) => onChange(people.filter((_, idx) => idx !== i));
+// ── Person section ────────────────────────────────────────────
+function PersonSection({ title, description, nameLabel, surnameLabel, addLabel, people, onChange }) {
+  const update = (i, field, val) => onChange(people.map((p, idx) => idx === i ? { ...p, [field]: val } : p));
+  const add = () => onChange([...people, { firstName: '', lastName: '' }]);
+  const remove = (i) => onChange(people.filter((_, idx) => idx !== i));
 
   return (
-    <div>
-      <div className="people-list">
+    <div className="person-section">
+      <h3 className="person-section-title">{title}</h3>
+      <p className="person-section-desc">{description}</p>
+      <div className="person-rows">
         {people.map((p, i) => (
           <div className="person-row" key={i}>
-            <input type="text" placeholder="First name" value={p.firstName}
-              onChange={e => updatePerson(i, 'firstName', e.target.value)} />
-            <input type="text" placeholder="Last name" value={p.lastName}
-              onChange={e => updatePerson(i, 'lastName', e.target.value)} />
-            <button type="button" className="btn-remove" onClick={() => removePerson(i)}
-              disabled={people.length === 1} title="Remove">×</button>
+            <div className="field">
+              <label>{nameLabel}</label>
+              <input type="text" placeholder="Name"
+                value={p.firstName} onChange={e => update(i, 'firstName', e.target.value)} />
+            </div>
+            <div className="field">
+              <label>{surnameLabel}</label>
+              <input type="text" placeholder="Surname"
+                value={p.lastName} onChange={e => update(i, 'lastName', e.target.value)} />
+            </div>
+            {i > 0 && (
+              <button type="button" className="btn-remove-inline" onClick={() => remove(i)} title="Remove">×</button>
+            )}
           </div>
         ))}
       </div>
-      <button type="button" className="btn-add" onClick={addPerson}>
-        + Add another {label}
+      <button type="button" className="btn-add-link" onClick={add}>
+        + {addLabel}
       </button>
     </div>
   );
 }
 
+// ── App ───────────────────────────────────────────────────────
 export default function App() {
-  const { theme, toggle } = useTheme();
   const { token: presetToken } = getUrlParams();
 
   const [step, setStep] = useState(1);
@@ -366,9 +478,8 @@ export default function App() {
   });
   const [ubos, setUbos] = useState([{ firstName: '', lastName: '' }]);
   const [directors, setDirectors] = useState([{ firstName: '', lastName: '' }]);
-  const [countrySearch, setCountrySearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
   const updateForm = (field, value) => {
@@ -376,24 +487,45 @@ export default function App() {
     if (fieldErrors[field]) setFieldErrors(prev => ({ ...prev, [field]: null }));
   };
 
+  const handleTaxIdChange = (value) => {
+    let processed = value;
+    if (country?.code === 'US') {
+      processed = value.replace(/\D/g, '').slice(0, 9);
+    }
+    updateForm('taxId', processed);
+  };
+
+  const handleTaxIdBlur = () => {
+    if (form.taxId) {
+      const err = validateTaxId(form.taxId, country?.code);
+      if (err) setFieldErrors(prev => ({ ...prev, taxId: err }));
+    }
+  };
+
   const handleCountrySelect = (c) => {
     setCountry({ ...c, isEU: EU_CODES.has(c.code) });
-    setStep(2);
+    setForm(prev => ({ ...prev, taxId: '', state: '' }));
+    setFieldErrors({});
   };
 
   const validateStep2 = () => {
     const errors = {};
     if (!form.businessName.trim()) errors.businessName = 'Required';
-    if (!form.taxId.trim())        errors.taxId = 'Required';
-    if (!form.city.trim())         errors.city = 'Required';
-    if (!form.postalCode.trim())   errors.postalCode = 'Required';
+    if (!form.taxId.trim()) {
+      errors.taxId = 'Required';
+    } else {
+      const taxErr = validateTaxId(form.taxId, country?.code);
+      if (taxErr) errors.taxId = taxErr;
+    }
+    if (!form.city.trim()) errors.city = 'Required';
+    if (!form.postalCode.trim()) errors.postalCode = 'Required';
     if (country?.code === 'US' && !form.state) errors.state = 'Required';
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async () => {
-    setError(null);
+    setSubmitError(null);
     setLoading(true);
     setStep(4);
 
@@ -424,12 +556,9 @@ export default function App() {
           .map(p => `${p.firstName} ${p.lastName}`.trim());
       }
 
-      await Promise.all([
-        submitEkyb(token, payload),
-        finishSession(token),
-      ]);
+      await Promise.all([submitEkyb(token, payload), finishSession(token)]);
     } catch (err) {
-      setError(err.message || 'An unexpected error occurred. Please try again.');
+      setSubmitError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -438,232 +567,220 @@ export default function App() {
   const handleRestart = () => {
     setStep(1);
     setCountry(null);
-    setCountrySearch('');
     setForm({ businessName: '', taxId: '', street: '', houseNo: '', addressLine2: '', city: '', state: '', postalCode: '' });
     setUbos([{ firstName: '', lastName: '' }]);
     setDirectors([{ firstName: '', lastName: '' }]);
-    setError(null);
+    setSubmitError(null);
     setFieldErrors({});
   };
 
+  const taxIdHint = country ? getTaxIdHint(country.code) : null;
+
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-left">
+      <div className="card">
+
+        {/* ── Logo ── */}
+        <div className="card-logo">
           <IncodeLogo className="logo-svg" />
-          <span className="header-badge">eKYB</span>
         </div>
-        <button className="theme-toggle" onClick={toggle} title="Toggle theme" aria-label="Toggle theme">
-          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-        </button>
-      </header>
 
-      <main className="main">
-        <div className="form-container">
-          <ProgressBar step={step} />
+        {/* ── Content ── */}
+        <div className="card-body">
 
-          {/* ── STEP 1: Country ── */}
+          {/* STEP 1 — Country */}
           {step === 1 && (
-            <div className="step-card">
-              <h2 className="step-title">Select your country</h2>
-              <p className="step-subtitle">Choose the country where your business is registered.</p>
-              <div className="country-search-wrapper">
-                <svg className="country-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input
-                  type="text"
-                  className="country-search"
-                  placeholder="Search countries…"
-                  value={countrySearch}
-                  onChange={e => setCountrySearch(e.target.value)}
-                  autoFocus
-                />
-                {countrySearch && (
-                  <button className="country-search-clear" onClick={() => setCountrySearch('')} type="button" aria-label="Clear">×</button>
-                )}
+            <div className="step-content" key="step1">
+              <h2 className="step-title">Where is your business registered?</h2>
+              <p className="step-subtitle">Select the country where your business is registered.</p>
+              <div className="field">
+                <label className="field-label">Country</label>
+                <CountryDropdown value={country} onChange={handleCountrySelect} />
               </div>
-              {(() => {
-                const q = countrySearch.toLowerCase();
-                const filtered = COUNTRIES.filter(c =>
-                  c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
-                );
-                return filtered.length > 0 ? (
-                  <div className="country-grid">
-                    {filtered.map(c => (
-                      <button key={c.code} type="button"
-                        className={`country-card ${country?.code === c.code ? 'selected' : ''}`}
-                        onClick={() => handleCountrySelect(c)}>
-                        <FlagIcon code={c.code} name={c.name} />
-                        <span className="country-name">{c.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="country-no-results">No countries found for "{countrySearch}"</p>
-                );
-              })()}
+              <div className="btn-actions single">
+                <button type="button" className="btn-primary"
+                  disabled={!country}
+                  onClick={() => setStep(2)}>
+                  Continue
+                </button>
+              </div>
             </div>
           )}
 
-          {/* ── STEP 2: Business info ── */}
+          {/* STEP 2 — Business details */}
           {step === 2 && (
-            <div className="step-card">
-              <h2 className="step-title">Business information</h2>
-              <p className="step-subtitle">
-                Enter your registered business details. Fields marked <span className="required-star">*</span> are required.
-              </p>
-              <div className="form-grid">
-                <div className="field full">
-                  <label>Business Name <span className="required-star">*</span></label>
+            <div className="step-content" key="step2">
+              <h2 className="step-title">Business details</h2>
+              <div className="form-stack">
+                <div className="field">
+                  <label className="field-label">Business name</label>
                   <input type="text" placeholder="e.g. Acme Corporation Ltd"
-                    value={form.businessName} onChange={e => updateForm('businessName', e.target.value)}
+                    value={form.businessName}
+                    onChange={e => updateForm('businessName', e.target.value)}
                     className={fieldErrors.businessName ? 'error' : ''} />
                   {fieldErrors.businessName && <span className="field-error">{fieldErrors.businessName}</span>}
                 </div>
-                <div className="field full">
-                  <label>Tax ID / Registration Number <span className="required-star">*</span></label>
-                  <input type="text" placeholder={country?.code === 'US' ? 'e.g. 123456789' : 'e.g. GB450020358'}
-                    value={form.taxId} onChange={e => updateForm('taxId', e.target.value)}
-                    className={fieldErrors.taxId ? 'error' : ''} />
+
+                <div className="field">
+                  <label className="field-label">Tax ID</label>
+                  <input type="text"
+                    placeholder={country?.code === 'US' ? '123456789' : 'Enter Tax ID'}
+                    value={form.taxId}
+                    onChange={e => handleTaxIdChange(e.target.value)}
+                    onBlur={handleTaxIdBlur}
+                    className={fieldErrors.taxId ? 'error' : ''}
+                    inputMode={country?.code === 'US' ? 'numeric' : 'text'} />
+                  {taxIdHint && !fieldErrors.taxId && (
+                    <span className="field-hint">{taxIdHint}</span>
+                  )}
                   {fieldErrors.taxId && <span className="field-error">{fieldErrors.taxId}</span>}
                 </div>
+
                 <div className="field">
-                  <label>House / Building No.</label>
-                  <input type="text" placeholder="e.g. 101"
-                    value={form.houseNo} onChange={e => updateForm('houseNo', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Street</label>
+                  <label className="field-label">Street</label>
                   <input type="text" placeholder="e.g. Mission St"
-                    value={form.street} onChange={e => updateForm('street', e.target.value)} />
+                    value={form.street}
+                    onChange={e => updateForm('street', e.target.value)} />
                 </div>
-                <div className="field full">
-                  <label>Address Line 2</label>
-                  <input type="text" placeholder="Floor, Suite, Unit (optional)"
-                    value={form.addressLine2} onChange={e => updateForm('addressLine2', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>City <span className="required-star">*</span></label>
-                  <input type="text" placeholder="e.g. San Francisco"
-                    value={form.city} onChange={e => updateForm('city', e.target.value)}
-                    className={fieldErrors.city ? 'error' : ''} />
-                  {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
-                </div>
-                {country?.code === 'US' && (
+
+                <div className="form-row">
                   <div className="field">
-                    <label>State <span className="required-star">*</span></label>
-                    <select value={form.state} onChange={e => updateForm('state', e.target.value)}
-                      className={fieldErrors.state ? 'error' : ''}>
-                      <option value="">Select state…</option>
-                      {US_STATES.map(([code, name]) => (
-                        <option key={code} value={code}>{name}</option>
-                      ))}
-                    </select>
-                    {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
+                    <label className="field-label">House number</label>
+                    <input type="text" placeholder="e.g. 101"
+                      value={form.houseNo}
+                      onChange={e => updateForm('houseNo', e.target.value)} />
                   </div>
-                )}
-                <div className="field">
-                  <label>Postal Code <span className="required-star">*</span></label>
-                  <input type="text" placeholder={country?.code === 'US' ? '94105' : 'W1F 0DQ'}
-                    value={form.postalCode} onChange={e => updateForm('postalCode', e.target.value)}
+                  <div className="field">
+                    <label className="field-label">Address line 2 <span className="optional">(Optional)</span></label>
+                    <input type="text" placeholder="Floor, Suite, Unit…"
+                      value={form.addressLine2}
+                      onChange={e => updateForm('addressLine2', e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="field">
+                    <label className="field-label">City</label>
+                    <input type="text" placeholder="e.g. San Francisco"
+                      value={form.city}
+                      onChange={e => updateForm('city', e.target.value)}
+                      className={fieldErrors.city ? 'error' : ''} />
+                    {fieldErrors.city && <span className="field-error">{fieldErrors.city}</span>}
+                  </div>
+                  {country?.code === 'US' && (
+                    <div className="field">
+                      <label className="field-label">State</label>
+                      <select value={form.state}
+                        onChange={e => updateForm('state', e.target.value)}
+                        className={fieldErrors.state ? 'error' : ''}>
+                        <option value="">Select state…</option>
+                        {US_STATES.map(([code, name]) => (
+                          <option key={code} value={code}>{name}</option>
+                        ))}
+                      </select>
+                      {fieldErrors.state && <span className="field-error">{fieldErrors.state}</span>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="field half">
+                  <label className="field-label">Postal code</label>
+                  <input type="text"
+                    placeholder={country?.code === 'US' ? '94105' : 'e.g. W1F 0DQ'}
+                    value={form.postalCode}
+                    onChange={e => updateForm('postalCode', e.target.value)}
                     className={fieldErrors.postalCode ? 'error' : ''} />
                   {fieldErrors.postalCode && <span className="field-error">{fieldErrors.postalCode}</span>}
                 </div>
               </div>
+
               <div className="btn-actions">
                 <button type="button" className="btn-back" onClick={() => setStep(1)}>Back</button>
                 <button type="button" className="btn-primary"
                   onClick={() => { if (validateStep2()) setStep(3); }}>
-                  Continue →
+                  Continue
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── STEP 3: People ── */}
+          {/* STEP 3 — People */}
           {step === 3 && (
-            <div className="step-card">
-              <h2 className="step-title">Beneficial owners &amp; directors</h2>
-              <p className="step-subtitle">
-                Provide the names of beneficial owners (UBOs)
-                {country?.isEU ? ' and company directors' : ''} associated with the business.
-              </p>
-              <div className="section-divider">
-                <h3>Beneficial Owners (UBOs)</h3>
-                <div className="divider-line" />
-              </div>
-              <PersonList label="UBO" people={ubos} onChange={setUbos} />
+            <div className="step-content" key="step3">
+              <PersonSection
+                title="Unique Beneficial Owner"
+                description="Provide the names of beneficial owners associated to the business"
+                nameLabel="UBO (Unique Beneficial Owner) name"
+                surnameLabel="UBO surname"
+                addLabel="Add another UBO (Optional)"
+                people={ubos}
+                onChange={setUbos}
+              />
+
               {country?.isEU && (
-                <>
-                  <div className="section-divider">
-                    <h3>Directors</h3>
-                    <div className="divider-line" />
-                  </div>
-                  <PersonList label="Director" people={directors} onChange={setDirectors} />
-                </>
+                <PersonSection
+                  title="Director"
+                  description="Enter the name of the person legally responsible for managing the business."
+                  nameLabel="Director name"
+                  surnameLabel="Director surname"
+                  addLabel="Add another director (Optional)"
+                  people={directors}
+                  onChange={setDirectors}
+                />
               )}
+
               <div className="btn-actions">
                 <button type="button" className="btn-back" onClick={() => setStep(2)}>Back</button>
                 <button type="button" className="btn-primary" onClick={handleSubmit}>
-                  Submit Verification →
+                  Submit
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── STEP 4: Confirmation ── */}
+          {/* STEP 4 — Processing / Success / Error */}
           {step === 4 && (
-            <div className="step-card">
+            <div className="step-content center" key="step4">
               {loading ? (
-                <div className="loading-screen">
+                <>
                   <div className="spinner" />
-                  <div>
-                    <p className="loading-title">Submitting your verification…</p>
-                    <p className="loading-sub">This usually takes a few seconds. Please don't close this page.</p>
-                  </div>
-                </div>
-              ) : error ? (
-                <div className="error-screen">
-                  <div className="error-icon-circle">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <p className="status-label">Processing…</p>
+                </>
+              ) : submitError ? (
+                <>
+                  <div className="status-icon-circle error">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                   </div>
-                  <h2 className="step-title" style={{ marginTop: 20 }}>Submission Failed</h2>
-                  <p className="step-subtitle">{error}</p>
+                  <p className="status-label">Submission failed</p>
+                  <p className="status-sub">{submitError}</p>
                   <div className="btn-actions" style={{ justifyContent: 'center', marginTop: 24 }}>
                     <button type="button" className="btn-back" onClick={() => setStep(3)}>Go Back</button>
-                    <button type="button" className="btn-primary" onClick={handleSubmit}>Try Again →</button>
+                    <button type="button" className="btn-primary" onClick={handleSubmit}>Try Again</button>
                   </div>
-                </div>
+                </>
               ) : (
-                <div className="success-screen">
-                  <div className="success-icon-circle">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                      <path d="M7 16.5l6 6 12-12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <>
+                  <div className="status-icon-circle success">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   </div>
-                  <h2 className="success-title">Verification Submitted</h2>
-                  <p className="success-body">
-                    Thank you{form.businessName ? `, ${form.businessName}` : ''}. Your business information has been
-                    successfully submitted for review.
-                  </p>
-                  <p className="success-body secondary">
-                    Our compliance team will process your request. You will be contacted if any additional
-                    information is required.
-                  </p>
-                  <p className="success-close">You may now close this window.</p>
-                </div>
+                  <p className="status-label">eKYB verified!</p>
+                </>
               )}
             </div>
           )}
-        </div>
-      </main>
 
-      <footer className="footer">
-        <IncodeLogo className="footer-logo" />
-      </footer>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="card-footer">
+          <VerifiedBadge />
+        </div>
+
+      </div>
     </div>
   );
 }
