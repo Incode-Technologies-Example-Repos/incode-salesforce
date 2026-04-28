@@ -2,7 +2,7 @@ name: Deploy KYB Form to GitHub Pages
 
 on:
   push:
-    branches: [main, feature-new-kyb-form]
+    branches: [main, feature-new-kyb-form, feature-kyb-form-v2]
     paths:
       - 'kyb-form/**'
       - '.github/workflows/deploy-kyb-form.yml'
