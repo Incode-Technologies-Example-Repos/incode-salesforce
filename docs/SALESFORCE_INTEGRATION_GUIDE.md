@@ -150,7 +150,7 @@ For orgs where AppExchange installation is not available (e.g., sandboxes receiv
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/incode-id/incode-salesforce.git
+git clone https://github.com/Incode-Technologies-Example-Repos/incode-salesforce.git
 cd incode-salesforce
 
 # 2. Authenticate to your target org
