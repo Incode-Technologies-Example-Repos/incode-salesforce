@@ -1,6 +1,6 @@
 # Incode Identity Verification for Salesforce — Engineering Reference
 
-**Repository:** https://github.com/incode-id/incode-salesforce  
+**Repository:** https://github.com/Incode-Technologies-Example-Repos/incode-salesforce
 **Package type:** Salesforce Second-Generation Managed Package (2GP)  
 **API version:** 59.0  
 **Last updated:** April 2026
@@ -420,7 +420,7 @@ The Salesforce Site named `IncodeWebhook` must be Active. Its guest user profile
 
 ```bash
 # Clone the repository
-git clone https://github.com/incode-id/incode-salesforce.git
+git clone https://github.com/Incode-Technologies-Example-Repos/incode-salesforce.git
 cd incode-salesforce
 
 # Authenticate to the target org
