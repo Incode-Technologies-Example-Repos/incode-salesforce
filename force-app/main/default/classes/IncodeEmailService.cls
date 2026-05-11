@@ -220,24 +220,29 @@ public with sharing class IncodeEmailService {
             + '</table>'
             + '</td></tr></table>'
 
-            // ── CTA button (centered)
+            // ── CTA button (centered, bulletproof — padding on the <a>, not the <td>)
             + '<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0"'
             + ' style="margin:0 auto 28px;">'
             + '<tr><td align="center" bgcolor="#006aff"'
-            + ' style="background-color:#006aff;border-radius:8px;padding:17px 48px;">'
+            + ' style="background-color:#006aff;border-radius:8px;">'
             + '<a href="' + verificationUrl + '" target="_blank"'
-            + ' style="color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;'
-            + 'letter-spacing:0.4px;white-space:nowrap;display:block;">'
+            + ' style="display:inline-block;padding:17px 48px;color:#ffffff;'
+            + 'text-decoration:none;font-size:16px;font-weight:700;letter-spacing:0.4px;'
+            + 'white-space:nowrap;border-radius:8px;background-color:#006aff;'
+            + 'mso-padding-alt:0;font-family:Arial,Helvetica,sans-serif;">'
             + 'Verify My Business &nbsp;&#8594;'
             + '</a>'
             + '</td></tr></table>'
 
-            // Fallback URL
+            // Fallback URL (clickable hyperlink, not plain text)
             + '<p style="margin:0 0 6px;font-size:13px;color:#999;text-align:center;">'
             + 'If the button above does not work, copy and paste this link into your browser:'
             + '</p>'
-            + '<p style="margin:0 0 28px;font-size:12px;word-break:break-all;color:#006aff;text-align:center;">'
+            + '<p style="margin:0 0 28px;font-size:12px;word-break:break-all;text-align:center;">'
+            + '<a href="' + verificationUrl + '" target="_blank"'
+            + ' style="color:#006aff;text-decoration:underline;">'
             + verificationUrl
+            + '</a>'
             + '</p>'
 
             + '<hr style="border:none;border-top:1px solid #eeeeee;margin:0 0 20px;"/>'
