@@ -13,7 +13,7 @@ public with sharing class IncodeService {
     private static final String NAMED_CREDENTIAL_DEMO  = 'callout:IncodeAPI';
     private static final String NAMED_CREDENTIAL_PROD  = 'callout:IncodeAPI_Production';
     private static final String OMNI_START_PATH        = '/omni/start';
-    private static final String KYB_FORM_BASE_URL      = 'https://incode-technologies-example-repos.github.io/incode-salesforce';
+    private static final String OMNI_ONBOARDING_URL    = '/omni/onboarding-url';
 
     /** Returns the Named Credential prefix for the configured environment. */
     private static String namedCredential(Incode_Config__c config) {
@@ -99,11 +99,19 @@ public with sharing class IncodeService {
             throw new IncodeException('Incode response missing interviewId/interviewCode: ' + res.getBody());
         }
 
-        // Build the KYB form URL — the React form uses these params to authenticate
-        // its eKYB API calls without needing to start a new session.
-        String startUrl = KYB_FORM_BASE_URL
-            + '?token='       + EncodingUtil.urlEncode(sessionToken, 'UTF-8')
-            + '&interviewId=' + EncodingUtil.urlEncode(interviewId, 'UTF-8');
+        // Fetch the hosted onboarding URL via /omni/onboarding-url using the session token.
+        // The token is passed as X-Incode-Hardware-Id (Incode's session auth header).
+        String startUrl = null;
+        if (String.isNotBlank(sessionToken)) {
+            startUrl = fetchOnboardingUrl(nc, sessionToken, apiKey);
+        }
+
+        if (String.isBlank(startUrl)) {
+            throw new IncodeException(
+                'Could not retrieve onboarding URL from Incode. interviewId=' + interviewId
+                + '. Check that your API key and Configuration ID are correct.'
+            );
+        }
 
         // Persist a verification record
         Incode_Verification__c verif = new Incode_Verification__c(
@@ -130,6 +138,36 @@ public with sharing class IncodeService {
         result.verificationUrl   = startUrl;
         result.verificationRecordId = verif.Id;
         return result;
+    }
+
+    /**
+     * Calls /omni/onboarding-url to retrieve the hosted verification link for a session.
+     * Requires the session token returned by /omni/start as X-Incode-Hardware-Id.
+     *
+     * @param sessionToken  The JWT token from the /omni/start response.
+     * @param apiKey        The Incode API key.
+     * @return              The hosted onboarding URL, or null if unavailable.
+     */
+    @TestVisible
+    private static String fetchOnboardingUrl(String nc, String sessionToken, String apiKey) {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(nc + OMNI_ONBOARDING_URL);
+        req.setMethod('GET');
+        req.setHeader('Content-Type', 'application/json');
+        req.setHeader('x-api-key', apiKey);
+        req.setHeader('api-version', '1.0');
+        req.setHeader('X-Incode-Hardware-Id', sessionToken);
+        req.setTimeout(30000);
+
+        Http http = new Http();
+        HttpResponse res = http.send(req);
+
+        if (res.getStatusCode() < 200 || res.getStatusCode() >= 300) {
+            return null;
+        }
+
+        Map<String, Object> parsed = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+        return (String) parsed.get('url');
     }
 
     /**

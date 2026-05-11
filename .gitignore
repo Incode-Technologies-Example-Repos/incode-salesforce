@@ -11,6 +11,3 @@ Thumbs.db
 
 # Node
 node_modules/
-
-# KYB form environment
-kyb-form/.env
