@@ -288,11 +288,17 @@ const US_STATES = [
 function getTaxIdHint(countryCode) {
   switch (countryCode) {
     case 'US': return 'EIN: 9 digits, e.g. 123456789';
-    case 'GB': return 'Registration No. (7–8 digits) or VAT No. (9 digits)';
+    case 'GB': return 'Registration No. (7–8 digits) or VAT No. (GB + 9 digits or 9 digits alone)';
     case 'FR': return 'SIREN, SIRET, RCS, RC, or VAT number';
-    case 'ES': return 'CIF: A12345678 · NIF: 12345678A · Foreign: A1234567B';
+    case 'ES': return 'NIF: A12345678 · NIE: A1234567B · DNI: 12345678A';
     case 'IT': return 'CCIAA: AA123456 · Company ID: IT12345678 · VAT: 11 digits';
-    case 'DE': return 'VAT: DE123456789 · SafeNo: DE12345678 · Reg: HRB1234';
+    case 'DE': return 'VAT: DE123456789 · Reg: HRB1234 or HRA12345 or 4–6 digits';
+    case 'BR': return 'CNPJ: 00.000.000/0000-00 (14 digits)';
+    case 'NL': return 'VAT: NL123456789B12 · KvK: 12345678';
+    case 'CN': return 'Unified Social Credit Code: 18 alphanumeric characters';
+    case 'IL': return 'Mispar Osek: 9 digits';
+    case 'NG': return 'Tax ID: 10 digits';
+    case 'MX': return 'RFC: AAAA123456XX1 (individual) or AAA123456XX1 (business)';
     default: return null;
   }
 }
@@ -308,9 +314,11 @@ function validateTaxId(value, countryCode) {
       return null;
     }
     case 'GB': {
-      const digits = v.replace(/\D/g, '');
-      if (digits.length < 7 || digits.length > 9)
-        return 'Enter a valid Registration No. (7–8 digits) or VAT No. (9 digits)';
+      const regNo = /^\d{7,8}$/;
+      const vat   = /^GB\d{9}$/;
+      const vatNoPrefix = /^\d{9}$/;
+      if (!regNo.test(v) && !vat.test(v) && !vatNoPrefix.test(v))
+        return 'Enter a valid UK tax ID: Registration Number (7–8 digits) or VAT Number (GB followed by 9 digits, or 9 digits alone)';
       return null;
     }
     case 'FR': {
@@ -318,11 +326,11 @@ function validateTaxId(value, countryCode) {
       return null;
     }
     case 'ES': {
-      const p1 = /^[A-Z]\d{8}$/;
-      const p2 = /^[A-Z]\d{7}[A-Z]$/;
-      const p3 = /^\d{8}[A-Z]$/;
-      if (!p1.test(v) && !p2.test(v) && !p3.test(v))
-        return 'Expected: A12345678 (CIF), 12345678A (NIF), or A1234567B (foreign NIF)';
+      const nif = /^[A-Z]\d{8}$/;
+      const nie = /^[A-Z]\d{7}[A-Z]$/;
+      const dni = /^\d{8}[A-Z]$/;
+      if (!nif.test(v) && !nie.test(v) && !dni.test(v))
+        return 'Enter a valid Spanish tax ID: NIF (letter + 8 digits), NIE (letter + 7 digits + letter), or DNI (8 digits + letter)';
       return null;
     }
     case 'IT': {
@@ -334,13 +342,48 @@ function validateTaxId(value, countryCode) {
       return null;
     }
     case 'DE': {
-      const vat  = /^DE\d{9}$/;
-      const safe = /^DE\d{8}$/;
-      const hrb  = /^HRB\s*\d{3,6}[A-Z]?$/;
-      const hra  = /^HRA\s*\d{4,6}$/;
+      const vat   = /^DE\d{9}$/;
+      const hrb   = /^HRB\s*\d{3,6}$/;
+      const hrbL  = /^HRB\s*\d{6}[A-Z]$/;
+      const hra   = /^HRA\s*\d{4,6}$/;
       const plain = /^\d{4,6}$/;
-      if (!vat.test(v) && !safe.test(v) && !hrb.test(v) && !hra.test(v) && !plain.test(v))
-        return 'Expected: DE123456789, HRB1234, HRA12345, or 4–6 digit registration number';
+      if (!vat.test(v) && !hrb.test(v) && !hrbL.test(v) && !hra.test(v) && !plain.test(v))
+        return 'Enter a valid German tax ID: VAT (DE + 9 digits), HRB + (3–6 digits), HRB + (6 digits + letter), HRA (4–6 digits) or 4 to 6 digits';
+      return null;
+    }
+    case 'BR': {
+      const digits = v.replace(/[.\-/]/g, '');
+      if (!/^\d{14}$/.test(digits))
+        return 'Please enter a valid CNPJ number (in this 00000000000000 or this 00.000.000/0000-00 format)';
+      return null;
+    }
+    case 'NL': {
+      const vat = /^NL\d{9}B\d{2}$/;
+      const kvk = /^\d{8}$/;
+      if (!vat.test(v) && !kvk.test(v))
+        return 'Enter a valid Dutch tax ID: VAT number (NL + 9 digits + B + 2 digits) or KvK number (8 digits)';
+      return null;
+    }
+    case 'CN': {
+      if (!/^[A-Z0-9]{18}$/.test(v))
+        return 'Enter a valid Chinese Unified Social Credit Code (18 alphanumeric characters)';
+      return null;
+    }
+    case 'IL': {
+      if (!/^\d{9}$/.test(v))
+        return 'Enter a valid Israeli Mispar Osek (9 digits)';
+      return null;
+    }
+    case 'NG': {
+      if (!/^\d{10}$/.test(v))
+        return 'Enter a valid Nigerian tax ID (10 digits)';
+      return null;
+    }
+    case 'MX': {
+      const individual = /^[A-Z]{4}\d{6}[A-Z0-9]{3}$/;
+      const business   = /^[A-Z]{3}\d{6}[A-Z0-9]{3}$/;
+      if (!individual.test(v) && !business.test(v))
+        return 'Enter a valid Mexican RFC: Individual (4 letters + 6 digits + 3 alphanumeric) or Business (3 letters + 6 digits + 3 alphanumeric)';
       return null;
     }
     default:
@@ -491,6 +534,13 @@ export default function App() {
     let processed = value;
     if (country?.code === 'US') {
       processed = value.replace(/\D/g, '').slice(0, 9);
+    } else if (country?.code === 'BR') {
+      const d = value.replace(/\D/g, '').slice(0, 14);
+      if (d.length <= 2) processed = d;
+      else if (d.length <= 5) processed = `${d.slice(0,2)}.${d.slice(2)}`;
+      else if (d.length <= 8) processed = `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
+      else if (d.length <= 12) processed = `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
+      else processed = `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
     }
     updateForm('taxId', processed);
   };
@@ -534,7 +584,7 @@ export default function App() {
 
       const uboNames = ubos
         .filter(p => p.firstName.trim() || p.lastName.trim())
-        .map(p => `${p.firstName} ${p.lastName}`.trim());
+        .map(p => `${p.firstName.trim()} ${p.lastName.trim()}`.replace(/\s+/g, ' ').trim());
 
       const payload = {
         businessName:  form.businessName.trim(),
@@ -553,7 +603,7 @@ export default function App() {
       if (country.isEU) {
         payload.directors = directors
           .filter(p => p.firstName.trim() || p.lastName.trim())
-          .map(p => `${p.firstName} ${p.lastName}`.trim());
+          .map(p => `${p.firstName.trim()} ${p.lastName.trim()}`.replace(/\s+/g, ' ').trim());
       }
 
       await Promise.all([submitEkyb(token, payload), finishSession(token)]);
